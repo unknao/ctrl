@@ -1,4 +1,5 @@
 ctrl.AddCommand({"tp","teleport"},function(pl,...)
+	if not SERVER then return end
 	local start = pl:GetPos() + Vector(0,0,1)
 	local pltrdat = util.GetPlayerTrace( pl )
 	pltrdat.mask = bit.bor(CONTENTS_PLAYERCLIP,MASK_PLAYERSOLID_BRUSHONLY,MASK_SHOT_HULL)

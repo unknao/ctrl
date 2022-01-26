@@ -1,4 +1,5 @@
 ctrl.AddCommand({"me","i"},function(ply,_,_,txt)
+	if CLIENT then return end
 	net.Start("chatprint")
 	net.WriteTable({
 		ply:GetPlayerColor():ToColor(),
@@ -10,9 +11,10 @@ end,"<text>: says <text> in 3rd person.")
 ctrl.AddCommand("tts",function(ply,_,_,txt) 
 	net.Start("3dplay")
 	net.WriteTable({
-		"https://translate.google.com/translate_tts?ie=UTF-8&&tl=ja&client=tw-ob&q="..txt,
+		"https://translate.google.com/translate_tts?ie=UTF-8&&tl=en&client=tw-ob&q="..txt,
 		ply,
 	})
+	if CLIENT then return end
 	net.Broadcast()
 	net.Start("chatprint")
 	net.WriteTable({
@@ -27,6 +29,7 @@ ctrl.AddCommand("tts",function(ply,_,_,txt)
 	net.Broadcast()
 end,"<text>: vocalizes <text> via Text-To-Speech.")
 ctrl.AddCommand("rainbow",function(ply,_,_,txt)
+	if CLIENT then return end
 	local tbl={
 		a=1,
 		contents={}

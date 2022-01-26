@@ -1,22 +1,22 @@
-AddCSLuaFile()
 m={}
 m.lt=m.lt or {}
 
 ctrl.AddCommand("karmagod",function(ply)
     m.lt[ply]=not m.lt[ply]
-	local str=string.format("%s %s karmagod.",ply:Name(),m.lt[ply] and "enabled" or "disabled")
+	local karmacheck=m.lt[ply] and "enabled" or "disabled"
+	local str=CLIENT and  string.format("karmagod %s",karmacheck) or string.format("%s %s karmagod.",ply:Name(),karmacheck)
     ctrl.msg(str)
-	ctrl.SendMsg(ply,str,false)
+	if SERVER then
+		ply._bloodcolor=ply._bloodcolor or ply:GetBloodColor()
+		ply:SetBloodColor(m.lt[ply] and 3 or ply._bloodcolor)
+	end
 end,"<no args>: toggles complete damage reflection (karmagod)",false,true)
 
 if not SERVER then return end
-local efdata=EffectData()
 hook.Add("EntityTakeDamage","karmagod",function(ply,dmg)
     local criminal=dmg:GetAttacker()
 	if m.lt[ply] then
 		local infl=dmg:GetInflictor()
-		efdata:SetOrigin(dmg:GetDamagePosition())
-		util.Effect("cball_explode",efdata)
 		infl:EmitSound("weapons/ric"..math.random(1,5)..".wav")
 		if type(criminal)~="Player" then
 			if infl.CPPIGetOwner and IsValid(infl:CPPIGetOwner()) then

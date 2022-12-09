@@ -7,6 +7,7 @@ local hurtmodes = {
 	{"Damage reflection", true}, --5
 	{"Attacker drops weapon", true} --6
 }
+
 if SERVER then
 	util.AddNetworkString("ctrl.hurtmode")
 	
@@ -100,7 +101,7 @@ if SERVER then
 end
 
 if SERVER then return end
-CreateConVar("ctrl_cl_hurt_mode", "1", {FCVAR_ARCHIVE}, "Changes the way you take damage, see Options > CTRL > Hurt Mode for proper usage.")
+local cl_hurtmode = CreateConVar("ctrl_cl_hurt_mode", "1", {FCVAR_ARCHIVE}, "Changes the way you take damage, see Options -> CTRL -> Hurt Mode for proper usage.")
 
 hook.Add( "PopulateToolMenu", "ctrl.hurtmode", function()
 	spawnmenu.AddToolMenuOption( "Options", "CTRL", "Hurt Mode", "#Hurt Mode", "", "", function(pnl)
@@ -122,3 +123,11 @@ cvars.AddChangeCallback("ctrl_cl_hurt_mode", function(_, _, val)
 	net.SendToServer()
 end,
 "nettrigger")
+
+--Run once on join completion
+hook.Add("HUDPaint", "ctrl.hurtmode.setinitial", function()
+	net.Start("ctrl.hurtmode")
+	net.WriteInt(cl_hurtmode:GetInt(), 6)
+	net.SendToServer()
+	hook.Remove("HUDPaint", "ctrl.hurtmode.setinitial")
+end)

@@ -2,7 +2,7 @@ ctrl.AddCommand({"tp","teleport"},function(pl,...)
 	if not SERVER then return end
 	local start = pl:GetPos() + Vector(0,0,1)
 	local pltrdat = util.GetPlayerTrace( pl )
-	pltrdat.mask = bit.bor(CONTENTS_PLAYERCLIP,MASK_PLAYERSOLID_BRUSHONLY,MASK_SHOT_HULL)
+	pltrdat.mask = bit.bor(MASK_PLAYERSOLID_BRUSHONLY,MASK_SHOT_HULL)
 	local pltr = util.TraceLine( pltrdat )
 	
 	local endpos = pltr.HitPos
@@ -15,21 +15,16 @@ ctrl.AddCommand({"tp","teleport"},function(pl,...)
 	diff=diff*len
 	--start=endpos+diff
 	
-	if not wasinworld and util.IsInWorld(endpos-pltr.HitNormal*120) then
+	if not wasinworld and util.IsInWorld(endpos-pltr.HitNormal * pl:OBBMaxs().z) then
 		pltr.HitNormal=-pltr.HitNormal
 	end
-	start=endpos+pltr.HitNormal*120
-	
-	if math.abs(endpos.z-start.z)<2 then
-		endpos.z=start.z
-		--print"spooky match?"
-	end
+	start=endpos+pltr.HitNormal * pl:OBBMaxs().z
 	
 	local tracedata = {start=start,endpos=endpos}
 	
 	tracedata.filter = pl
-	tracedata.mins = Vector( -16, -16, 0 )
-	tracedata.maxs = Vector( 16, 16, 72 )
+	tracedata.mins = pl:OBBMins()
+	tracedata.maxs = pl:OBBMaxs()
 	tracedata.mask = bit.bor(CONTENTS_PLAYERCLIP,MASK_PLAYERSOLID_BRUSHONLY,MASK_SHOT_HULL)
 	local tr = util.TraceHull( tracedata )
 	

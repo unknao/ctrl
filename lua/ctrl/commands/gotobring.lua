@@ -9,11 +9,12 @@ ctrl.AddCommand({"go","goto"},function(ply,_,_,argstr)
 		return
 	end
 	if CLIENT then return end
-	local gt={}
-	gt.pos = ply2:GetPos()-ply2:GetForward()*-80
-	ply:SetPos(gt.pos)
+	local GotoPos = ply2:GetPos()-ply2:GetForward()*-80
+	
+	ply:SetPos(GotoPos)
 	ply:SetEyeAngles((ply2:GetShootPos()-ply:GetShootPos()):Angle())
 	ply:EmitSound("NPC_Antlion.Footstep")
+	
 	ctrl.msg(string.format("%s went to %s.",ply:Name(),ply2:Name()))
 end,"<playername>: takes you to <playername>.",true)
 
@@ -28,11 +29,14 @@ ctrl.AddCommand("bring",function(ply,_,_,argstr)
 		return
 	end
 	if CLIENT then return end
-	local br={}
-	br.pos = ply:GetPos()+ply:GetForward()*150
+	local BringPos = ply:GetPos()+ply:GetForward()*150
+	
 	if IsValid(ply2:GetVehicle()) then ply2:ExitVehicle() end
 	if !ply2:Alive() then ply2:Spawn() end
-	ply2:SetPos(br.pos)
+	
+	ply2:SetPos(BringPos)
+	ply2:SetVelocity(-ply2:GetVelocity())
 	ply2:EmitSound("NPC_Barnacle.PullPant")
+	
 	ctrl.msg(string.format("%s brought %s to themselves.",ply:Name(),ply2:Name()))	
 end,"<playername>: takes <playername> to you.",true,true)

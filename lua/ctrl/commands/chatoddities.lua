@@ -1,4 +1,4 @@
-ctrl.AddCommand({"me","i"},function(ply,_,_,txt)
+ctrl.AddCommand("me",function(ply,_,_,txt)
 	if CLIENT then return end
 	net.Start("chatprint")
 	net.WriteTable({
@@ -60,12 +60,3 @@ ctrl.AddCommand("rainbow",function(ply,_,_,txt)
 	net.WriteBool(true)
 	net.Broadcast()
 end,"<text>: rainbowises <text>.")
-ctrl.AddCommand({"svtitle","addservertitle"},function(ply,_,_,txt)
-	if #txt>60 then 
-		if CLIENT then ctrl.err(string.format("Title too long! (%i/60)",#txt)) end
-		return 
-	end
-	ctrl.msg(string.format("Title Added successfully! (%q)",txt))
-	if CLIENT then return end
-	file.Append("svtitle.txt","\n"..txt)
-end,"<text>: permanently adds <text> to server titles (must be shorter than 60 characters)",true,true)

@@ -26,7 +26,7 @@ ctrl.AddCommand("ban",function(ply,cmd,args,argstr)
 		return
 	end
 	if toban:IsBot() then
-		if CLIENT then ctrl.err("You can't ban a bot!") end
+		ctrl.CallCommand(ply,cmd,args,argstr)
 		return
 	end
 	if not SERVER then return end
@@ -39,8 +39,7 @@ ctrl.AddCommand({"bot","spawnbot"},function(_,_,args,_)
 	if CLIENT then return end
 	if tonumber(args[1])~= nil then
 		for i=1,args[1] do
-		local clr=HSVToColor(math.random(0,360),0.7,0.8)
-		player.CreateNextBot("Bot"..#player.GetBots()+1):SetPlayerColor(Vector(clr.r,clr.g,clr.b)/255)
+			player.CreateNextBot("Bot"..#player.GetBots()+1)
 		end
 		return
 	end
@@ -49,4 +48,4 @@ ctrl.AddCommand({"bot","spawnbot"},function(_,_,args,_)
 		local clr=HSVToColor(math.random(0,360),0.7,0.8)
 		player.CreateNextBot(v):SetPlayerColor(Vector(clr.r,clr.g,clr.b)/255)
 	end
-end,"<args>: create one or multiple bots named <args>.",true,true)		
+end,"<args>: create one or multiple (if number input) bots named <args>.",true,true)		

@@ -39,13 +39,12 @@ ctrl.AddCommand({"bot","spawnbot"},function(_,_,args,_)
 	if CLIENT then return end
 	if tonumber(args[1])~= nil then
 		for i=1,args[1] do
-			player.CreateNextBot("Bot"..#player.GetBots()+1)
+			player.CreateNextBot("Bot"..#player.GetBots()+1).hurtmode = 1
 		end
 		return
 	end
 	for k,v in pairs(args) do
 		if v=="" then v="Bot"..#player.GetBots()+1 end
-		local clr=HSVToColor(math.random(0,360),0.7,0.8)
-		player.CreateNextBot(v):SetPlayerColor(Vector(clr.r,clr.g,clr.b)/255)
+		player.CreateNextBot(v).hurtmode = 1
 	end
 end,"<args>: create one or multiple (if number input) bots named <args>.",true,true)		

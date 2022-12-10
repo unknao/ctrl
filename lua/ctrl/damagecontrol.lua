@@ -18,8 +18,6 @@ if SERVER then
 		if hurtmodes[dmode][2] then
 			if not ply:IsSuperAdmin() then return end
 		end
-		
-		print(ply:Name().." sent hurtmode: "..dmode)
 		ply.hurtmode = dmode
 	end)
 	
@@ -27,9 +25,10 @@ if SERVER then
 	local hurtmode_funcs = {
 		function(ply, dmg) end, --Mortal
 		
-		function(ply, dmg) return true end, --God
+		function(ply, dmg) return not dmg:GetDamageCustom() == 584536  end, --God
 		
 		function(ply, dmg) --Buddha
+			if dmg:GetDamageCustom() == 584536 then return end
 			ply:SetVelocity(dmg:GetDamageForce() * 0.011) -- needed or else it stops setting player force
 			dmg:SetDamageForce(Vector(0, 0, 0))
 			dmg:SetDamage(math.min(ply:Health() - 1, dmg:GetDamage()))
@@ -46,30 +45,44 @@ if SERVER then
 			if attacker.hurtmode == 1 then return end -- Mortal
 			if attacker.hurtmode == 4 then return end -- Same as us
 		
-			return true
+			return not dmg:GetDamageCustom() == 584536 
 		end,
 		
 		function(ply, dmg) --Damage reflection
+			if dmg:IsFallDamage() then return true end
 			local attacker = dmg:GetAttacker()
-			if attacker == ply then return true end
 			
-			if not dmg:IsFallDamage() then
-				ply:EmitSound("FX_RicochetSound.Ricochet")
+			if attacker == ply then return true end
+			if attacker.hurtmode then
+				if hurtmodes[attacker.hurtmode][2] then return true end
 			end
 			
-			dmg:SetAttacker(ply)
-			dmg:SetInflictor(ply)
-			dmg:SetDamageForce(dmg:GetDamageForce())
-			dmg:SetReportedPosition(ply:GetPos()-(ply:GetPos()-attacker:GetPos())*2)
-			attacker:TakeDamageInfo(dmg)
+			if not attacker:IsPlayer() and not attacker:IsNPC() then
+				local phys = attacker:GetPhysicsObject()
+				if not IsValid(phys) then return true end
+				
+				phys:ApplyForceOffset(dmg:GetDamageForce(), dmg:GetDamagePosition())
+				attacker:TakeDamageInfo(dmg)
+			end
+			ply:EmitSound("FX_RicochetSound.Ricochet")
 			
-			dmg:SetDamage(0)
+			local pos = ply:WorldToLocal(dmg:GetDamagePosition())
+			dmg:SetAttacker(ply)
+			dmg:SetDamageCustom(584536) --For damaging others through godmode
+			dmg:SetDamageForce(-dmg:GetDamageForce())
+			dmg:SetDamagePosition(attacker:LocalToWorld(pos))
+			
+			attacker:TakeDamageInfo(dmg)
 			return true
 		end,
 		
 		function(ply, dmg) --Attacker drops weapon
 			local attacker = dmg:GetAttacker()
-			if attacker == ply then return end
+			if attacker == ply then return true end
+			
+			if attacker.hurtmode then
+				if hurtmodes[attacker.hurtmode][2] then return true end
+			end
 			
 			if attacker:IsNPC() or attacker:IsPlayer() then
 				local wep = attacker:GetActiveWeapon()

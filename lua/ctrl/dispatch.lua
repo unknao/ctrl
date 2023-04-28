@@ -1,53 +1,56 @@
 local function text2command(txt)
-	local cmd=string.match(txt,"%w+")
-	local str=string.gsub(txt,ctrl.seperator,"")
-	local args=string.Explode(", ",str)
-	return cmd,args,str
+	local cmd=string.match(txt, "%w+")
+	local str=string.gsub(txt, ctrl.seperator, "")
+	local args=string.Explode(",  ", str)
+	return cmd, args, str
 end
+
 if SERVER then
 	util.AddNetworkString("ctrlcmd")
-	hook.Add("PlayerSay","ctrlcmd",function(ply,str)
+	hook.Add("PlayerSay", "ctrlcmd", function(ply, str)
 		local txt=string.lower(str)
-		if not string.match(txt[1],ctrl.prefix) then return end
-		txt=string.gsub(txt,"^"..ctrl.prefix,"")
+		if not string.match(txt[1], ctrl.prefix) then return end
+		txt=string.gsub(txt, "^"..ctrl.prefix, "")
 		net.Start("ctrlcmd")
 		net.WriteString(txt)
 		net.Send(ply)
-		shouldhide=ctrl.CallCommand(ply,text2command(txt))
+		shouldhide=ctrl.CallCommand(ply, text2command(txt))
 		if not shouldhide then
 			return ""
 		end
 	end)
-	net.Receive("ctrlcmd",function(_,ply)
+	net.Receive("ctrlcmd", function(_, ply)
 		local txt=net.ReadString()
-		ctrl.CallCommand(ply,text2command(txt))
+		ctrl.CallCommand(ply, text2command(txt))
 	end)
 end
+
 if CLIENT then
-	net.Receive("ctrlcmd",function()
+	net.Receive("ctrlcmd", function()
 		local txt=net.ReadString()
-		ctrl.CallCommand(LocalPlayer(),text2command(txt))
+		ctrl.CallCommand(LocalPlayer(), text2command(txt))
 	end)
-	concommand.Add("ctrl",function(ply,cmd,args,argstr)
+	concommand.Add("ctrl", function(ply, cmd, args, argstr)
 		if #argstr==0 then return end
-		ctrl.CallCommand(ply,text2command(argstr))
+		ctrl.CallCommand(ply, text2command(argstr))
+		PrintTable(ply, text2command(argstr))
 		net.Start("ctrlcmd")
 		net.WriteString(argstr)
 		net.SendToServer()
-	end,
-	function(cmd,args)
+	end, 
+	function(cmd, args)
 		local ply=LocalPlayer()
 		local tbl={}
-		local subcmd = string.Explode(" ",string.gsub(args,"^ ",""))[1]
+		local subcmd = string.Explode(" ", string.gsub(args, "^ ", ""))[1]
 		if ctrl.cmds[subcmd] then
 			if ply:IsAdmin() or !ctrl.cmds[subcmd].admin then
-				tbl={string.format("%s %s %s",cmd,subcmd,ctrl.cmds[subcmd].help)}
+				tbl={string.format("%s %s %s", cmd, subcmd, ctrl.cmds[subcmd].help)}
 			end
 			else
-			for k,v in pairs(ctrl.cmds) do
-				if string.find(k,subcmd) then
+			for k, v in pairs(ctrl.cmds) do
+				if string.find(k, subcmd) then
 					if ply:IsAdmin() or !v.admin then
-						tbl[#tbl+1]=string.format("%s %s",cmd,k)
+						tbl[#tbl+1]=string.format("%s %s", cmd, k)
 					end
 				end
 			end

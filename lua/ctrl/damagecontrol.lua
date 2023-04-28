@@ -25,7 +25,9 @@ if SERVER then
 	local hurtmode_funcs = {
 		function(ply, dmg) end, --Mortal
 		
-		function(ply, dmg) return not dmg:GetDamageCustom() == 584536  end, --God
+		function(ply, dmg)
+			return not (dmg:GetDamageCustom() == 584536)
+		end, --God
 		
 		function(ply, dmg) --Buddha
 			if dmg:GetDamageCustom() == 584536 then return end
@@ -45,11 +47,11 @@ if SERVER then
 			if attacker.hurtmode == 1 then return end -- Mortal
 			if attacker.hurtmode == 4 then return end -- Same as us
 		
-			return not dmg:GetDamageCustom() == 584536 
+			return not (dmg:GetDamageCustom() == 584536)
 		end,
 		
 		function(ply, dmg) --Damage reflection
-			if dmg:IsFallDamage() then return true end
+			if dmg:IsFallDamage() then return end
 			local attacker = dmg:GetAttacker()
 			
 			if attacker == ply then return true end
@@ -108,7 +110,6 @@ if SERVER then
 	
 	hook.Add("EntityTakeDamage","ctrl.hurtcontrol",function(ply, dmg)
 		if not ply:IsPlayer() then return end
-		
 		return hurtmode_funcs[ply.hurtmode](ply, dmg)
 	end)
 end

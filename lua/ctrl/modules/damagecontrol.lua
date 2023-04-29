@@ -46,7 +46,7 @@ if SERVER then
 			
 			if attacker.hurtmode == 1 then return end -- Mortal
 			if attacker.hurtmode == 4 then return end -- Same as us
-		
+			
 			return not (dmg:GetDamageCustom() == 584536)
 		end,
 		
@@ -86,12 +86,11 @@ if SERVER then
 				if hurtmodes[attacker.hurtmode][2] then return true end
 			end
 			
-			if attacker:IsNPC() or attacker:IsPlayer() then
+			if attacker:IsPlayer() or attacker:IsNPC() then 
 				local wep = attacker:GetActiveWeapon()
-				if IsValid(wep) then 
+				if IsValid(wep) then
 					attacker:DropWeapon(wep)
 				end
-				
 				else
 				
 				for k, v in pairs(constraint.GetAllConstrainedEntities(attacker)) do
@@ -105,9 +104,9 @@ if SERVER then
 			end
 			return true
 		end,
-	}
-	--END OF FUNCTIONS
-	
+}
+--END OF FUNCTIONS
+
 	hook.Add("EntityTakeDamage","ctrl.hurtcontrol",function(ply, dmg)
 		if not ply:IsPlayer() then return end
 		return hurtmode_funcs[ply.hurtmode](ply, dmg)
@@ -118,15 +117,15 @@ if SERVER then return end
 local cl_hurtmode = CreateConVar("ctrl_cl_hurt_mode", "1", {FCVAR_ARCHIVE}, "Changes the way you take damage, see Options -> CTRL -> Hurt Mode for proper usage.")
 
 hook.Add( "PopulateToolMenu", "ctrl.hurtmode", function()
-	spawnmenu.AddToolMenuOption( "Options", "CTRL", "Hurt Mode", "#Hurt Mode", "", "", function(pnl)
-		local Cbox = pnl:ComboBox("Hurt Mode", "ctrl_cl_hurt_mode")
-		
-		for i, v in ipairs(hurtmodes) do
-			if v[2] then 
-				if not LocalPlayer():IsSuperAdmin() then continue end
-			end
-			
-			Cbox:AddChoice(v[1], i)
+spawnmenu.AddToolMenuOption( "Options", "CTRL", "Hurt Mode", "#Hurt Mode", "", "", function(pnl)
+	local Cbox = pnl:ComboBox("Hurt Mode", "ctrl_cl_hurt_mode")
+
+	for i, v in ipairs(hurtmodes) do
+		if v[2] then 
+		if not LocalPlayer():IsSuperAdmin() then continue end
+		end
+
+		Cbox:AddChoice(v[1], i)
 		end
 	end)
 end)
@@ -135,8 +134,7 @@ cvars.AddChangeCallback("ctrl_cl_hurt_mode", function(_, _, val)
 	net.Start("ctrl.hurtmode")
 	net.WriteInt(val, 6)
 	net.SendToServer()
-end,
-"nettrigger")
+end, "nettrigger")
 
 --Run once on join completion
 hook.Add("HUDPaint", "ctrl.hurtmode.setinitial", function()

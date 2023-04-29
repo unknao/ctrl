@@ -1,42 +1,32 @@
 local function text2command(txt)
-	local cmd=string.match(txt, "%w+")
-	local str=string.gsub(txt, ctrl.seperator, "")
-	local args=string.Explode(",  ", str)
+	local cmd = string.match(txt, "%w+")
+	local str = string.gsub(txt, ctrl.seperator, "")
+	local args = string.Explode(",  ", str)
 	return cmd, args, str
 end
 
 if SERVER then
-	util.AddNetworkString("ctrlcmd")
 	hook.Add("PlayerSay", "ctrlcmd", function(ply, str)
-		local txt=string.lower(str)
+		local txt = string.lower(str)
 		if not string.match(txt[1], ctrl.prefix) then return end
 		txt=string.gsub(txt, "^"..ctrl.prefix, "")
+		local cmd, args, str = text2command(txt)
+		
 		net.Start("ctrlcmd")
-		net.WriteString(txt)
+		net.WriteTable({cmd, args, str})
 		net.Send(ply)
-		shouldhide=ctrl.CallCommand(ply, text2command(txt))
-		if not shouldhide then
-			return ""
-		end
-	end)
-	net.Receive("ctrlcmd", function(_, ply)
-		local txt=net.ReadString()
-		ctrl.CallCommand(ply, text2command(txt))
+		if not ctrl.cmds[cmd].showchat then return "" end
 	end)
 end
 
 if CLIENT then
 	net.Receive("ctrlcmd", function()
-		local txt=net.ReadString()
-		ctrl.CallCommand(LocalPlayer(), text2command(txt))
+		ctrl.CallCommand(LocalPlayer(), unpack(net.ReadTable()))
 	end)
+	
 	concommand.Add("ctrl", function(ply, cmd, args, argstr)
 		if #argstr==0 then return end
 		ctrl.CallCommand(ply, text2command(argstr))
-		PrintTable(ply, text2command(argstr))
-		net.Start("ctrlcmd")
-		net.WriteString(argstr)
-		net.SendToServer()
 	end, 
 	function(cmd, args)
 		local ply=LocalPlayer()

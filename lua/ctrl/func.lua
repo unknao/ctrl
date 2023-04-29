@@ -20,17 +20,13 @@ function ctrl.EntByString(str)
 end
 
 function ctrl.msg(str)
-	if CLIENT then
-		chat.AddText(Color(74, 255, 137), "[CTRL] ", Color(255, 237, 74), str)
-		else
-		MsgC(Color(74, 255, 137), os.date("[%H:%M:%S][CTRL] "), Color(255, 237, 74), str, "\n")
-	end
+	MsgC(Color(74, 255, 137), os.date("[%H:%M:%S][CTRL] "), Color(255, 237, 74), str, "\n")
 end
 
 function ctrl.err(str)
 	MsgC(Color(255, 105, 41), os.date("[%H:%M:%S][CTRL] "), Color(255, 225, 79), str, "\n")
 	if CLIENT then
-		notification.AddLegacy("[CTRL] "..str, NOTIFY_ERROR, 3)
+		notification.AddLegacy(str, NOTIFY_ERROR, 3)
 		surface.PlaySound("buttons/button8.wav")
 	end
 end

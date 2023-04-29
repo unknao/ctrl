@@ -1,11 +1,4 @@
 ctrl.AddCommand("kick",function(ply,cmd,args,argstr)
-	if argstr == "bots" then
-		if CLIENT then return end
-		for k,v in pairs(player.GetBots())do
-			v:Kick("Bot Kick")
-		end
-		return
-	end
 	local tokick=ctrl.EntByString(args[1])
 	if type(tokick)=="string" then
 		if CLIENT then ctrl.err(tokick) end
@@ -19,14 +12,20 @@ ctrl.AddCommand("kick",function(ply,cmd,args,argstr)
 	tokick:Kick(#kickstr==0 and "byebye!" or kickstr)
 end,"<ply>, <reason(optional)>: kicks <ply> with <reason>.",true,true)
 
-ctrl.AddCommand("ban",function(ply,cmd,args,argstr)
+ctrl.AddCommand("kickbots",function(ply,cmd,args,argstr)
+	for k,v in pairs(player.GetBots())do
+		v:Kick("Bot Kick")
+	end
+end,"<no args>: kick all bots from the server.",true,true, SERVER)
+
+ctrl.AddCommand("ban",function(ply, cmd, args, argstr)
 	local toban=ctrl.EntByString(args[1])
 	if type(toban)=="string" then
 		if CLIENT then ctrl.err(toban) end
 		return
 	end
-	if toban:IsBot() then
-		ctrl.CallCommand(ply,cmd,args,argstr)
+	if toban:IsBot() then -- Banning bots is pointless, kick them instead.
+		ctrl.CallCommand(ply, "kick", args, argstr)
 		return
 	end
 	if not SERVER then return end
@@ -35,8 +34,7 @@ ctrl.AddCommand("ban",function(ply,cmd,args,argstr)
 	toban:Kick(#banstr==0 and "Banned by admin." or banstr)
 end,"<ply>, <time>, <reason(optional)>: ban <ply> with <reason> for <time>.",true,true)
 
-ctrl.AddCommand({"bot","spawnbot"},function(_,_,args,_)
-	if CLIENT then return end
+ctrl.AddCommand({"bot", "spawnbot"}, function(_, _, args, _)
 	if tonumber(args[1])~= nil then
 		for i=1,args[1] do
 			player.CreateNextBot("Bot"..#player.GetBots()+1).hurtmode = 1
@@ -47,4 +45,4 @@ ctrl.AddCommand({"bot","spawnbot"},function(_,_,args,_)
 		if v=="" then v="Bot"..#player.GetBots()+1 end
 		player.CreateNextBot(v).hurtmode = 1
 	end
-end,"<args>: create one or multiple (if number input) bots named <args>.",true,true)		
+end, "<args>: create one or multiple (if number input) bots named <args>.", true, true, SERVER)		

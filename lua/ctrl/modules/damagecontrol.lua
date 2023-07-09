@@ -1,4 +1,4 @@
---Name, Superadmin only?
+--Name, SuperAdmin only?
 local hurtmodes = {
 	{"Mortal", false}, --1
 	{"God", false}, --2
@@ -16,7 +16,10 @@ if SERVER then
 		local dmode = math.Clamp(dmode, 1, #hurtmodes) -- no funny business
 		
 		if hurtmodes[dmode][2] then
-			if not ply:IsSuperAdmin() then return end
+			if not ply:IsSuperAdmin() then 
+				ply.hurtmode = 1
+				return 
+			end
 		end
 		ply.hurtmode = dmode
 	end)
@@ -25,9 +28,9 @@ if SERVER then
 	local hurtmode_funcs = {
 		function(ply, dmg) end, --Mortal
 		
-		function(ply, dmg)
-			return not (dmg:GetDamageCustom() == 584536)
-		end, --God
+		function(ply, dmg) --God
+			return dmg:GetDamageCustom() ~= 584536
+		end,
 		
 		function(ply, dmg) --Buddha
 			if dmg:GetDamageCustom() == 584536 then return end
@@ -47,7 +50,7 @@ if SERVER then
 			if attacker.hurtmode == 1 then return end -- Mortal
 			if attacker.hurtmode == 4 then return end -- Same as us
 			
-			return not (dmg:GetDamageCustom() == 584536)
+			return dmg:GetDamageCustom() ~= 584536
 		end,
 		
 		function(ply, dmg) --Damage reflection

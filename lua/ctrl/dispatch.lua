@@ -1,12 +1,14 @@
 local function text2command(txt)
 	local cmd = string.match(txt, "%w+")
 	local str = string.gsub(txt, ctrl.seperator, "")
-	local args = string.Explode(",  ", str)
+	local args = string.Explode(", ", str)
 	return cmd, args, str
 end
 
 if SERVER then
+	
 	hook.Add("PlayerSay", "ctrlcmd", function(ply, str)
+	
 		local txt = string.lower(str)
 		if not string.match(txt[1], ctrl.prefix) then return end
 		txt=string.gsub(txt, "^"..ctrl.prefix, "")
@@ -15,8 +17,11 @@ if SERVER then
 		net.Start("ctrlcmd")
 		net.WriteTable({cmd, args, str})
 		net.Send(ply)
+		
 		if not ctrl.cmds[cmd].showchat then return "" end
+		
 	end)
+	
 end
 
 if CLIENT then

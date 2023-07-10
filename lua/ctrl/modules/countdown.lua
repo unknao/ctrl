@@ -20,10 +20,10 @@ if SERVER then
 		
 		--Do not exclude the people connecting mid countdown
 		hook.Add("FinishedLoading", "ctrl.countdown", function(ply)
-			print(1)
+			
 			local TimeRemaining = (CountdownStarted + duration) - RealTime()
 			if TimeRemaining <= 0 then return end
-			print(2)
+			
 			net.Start("ctrl.countdown")
 			net.WriteString(name)
 			net.WriteFloat(TimeRemaining)
@@ -121,41 +121,41 @@ if CLIENT then
 		end)
 		
 		if fancy then
+		
+			local Rumble = CreateSound(game.GetWorld(), "ambient/atmosphere/cave_outdoor1.wav")
+			if Rumble then
+				Rumble:SetSoundLevel(0)
+			end
 			
 			local LastTime, Time = 0
-			local Start, End = render.GetFogDistances()
-			hook.Add("SetupSkyboxFog", "ctrl.countdown", function()
+			--Make it look like the end of the world.
+			hook.Add("PostDrawTranslucentRenderables", "ctrl.countdown", function(bDepth, bSkybox)
+
+				if bSkybox  then return end
 				
 				local TimeRemaining = math.max(((CountdownStarted + duration) - RealTime()), 0)
 				
-				local Fraction = math.min(TimeRemaining / 10, 1)
-				
-				render.FogMode(1)
-				render.FogStart(Start * Fraction * 0.0625)
-				render.FogEnd(End * Fraction * 0.0625)
-				render.FogMaxDensity(1 - Fraction * 0.9)
-				return true
-				
-			end)
-			
-			hook.Add("SetupWorldFog", "ctrl.countdown", function()
-				
-				local TimeRemaining = math.max(((CountdownStarted + duration) - RealTime()), 0)
-				
-				local Fraction = math.min(TimeRemaining / 10, 1)
+				local Fraction = math.min(TimeRemaining / math.min(remainder, 10), 1)
 				
 				LastTime = Time
 				Time = math.ceil(TimeRemaining)
 				
-				if LastTime ~= Time and fancylines[Time] then
-					surface.PlaySound(fancylines[Time])
+				if Fraction < 1 then
+					util.ScreenShake(Vector(0, 0, 0), math.ease.InExpo(1 - Fraction) * 6, 50, 0.1, 0)
 				end
 				
-				render.FogMode(1)
-				render.FogStart(Start * Fraction)
-				render.FogEnd(End * Fraction)
-				render.FogMaxDensity(1 - Fraction * 0.9)
-				return true
+				if LastTime ~= Time and fancylines[Time] then
+					if Time == 7 then
+						Rumble:Play()
+						Rumble:ChangeVolume(0, 0)
+						Rumble:ChangeVolume(1, 7)
+					end
+					surface.PlaySound(fancylines[Time])
+				end
+
+				render.CullMode(1)
+				render.DrawSphere(EyePos(), 10 + 32000 * Fraction, 50, 50, Color(255, 255, 255, 255 * (1 - Fraction)))
+				render.CullMode(0)
 				
 			end)
 			
@@ -163,10 +163,10 @@ if CLIENT then
 		
 		timer.Create("ctrl.countdown", duration, 1, function()
 			
+			surface.PlaySound("buttons/button1.wav")
 			hook.Remove("HUDPaint", "ctrl.countdown")
 			timer.Simple(2, function()
-				hook.Remove("SetupSkyboxFog", "ctrl.countdown")
-				hook.Remove("SetupWorldFog", "ctrl.countdown")
+				hook.Remove("PostDrawTranslucentRenderables", "ctrl.countdown")
 			end)
 			
 		end)
@@ -176,8 +176,7 @@ if CLIENT then
 	net.Receive("ctrl.abort", function()
 		
 		hook.Remove("HUDPaint", "ctrl.countdown")
-		hook.Remove("SetupSkyboxFog", "ctrl.countdown")
-		hook.Remove("SetupWorldFog", "ctrl.countdown")
+		hook.Remove("PostDrawTranslucentRenderables", "ctrl.countdown")
 		timer.Stop("ctrl.countdown")
 		surface.PlaySound("buttons/button1.wav")
 		

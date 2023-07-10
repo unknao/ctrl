@@ -44,10 +44,13 @@ if SERVER then
 	end
 	
 	function ctrl.abort()
+	
+		ctrl.msg("Countdown aborted.")
 		timer.Stop("ctrl.countdown")
 		hook.Remove("FinishedLoading", "ctrl.countdown")
 		net.Start("ctrl.abort")
 		net.Broadcast()
+		
 	end
 	
 end
@@ -146,8 +149,7 @@ if CLIENT then
 				
 				if LastTime ~= Time and fancylines[Time] then
 					if Time == 7 then
-						Rumble:Play()
-						Rumble:ChangeVolume(0, 0)
+						Rumble:PlayEx(0, 100)
 						Rumble:ChangeVolume(1, 7)
 					end
 					surface.PlaySound(fancylines[Time])

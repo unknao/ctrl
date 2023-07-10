@@ -54,7 +54,7 @@ end,"<ply>, <time>, <reason(optional)>: ban <ply> with <reason> for <time>.",tru
 
 ctrl.AddCommand({"bot", "spawnbot"}, function(_, _, args, _)
 	
-	if tonumber(args[1])~= nil then
+	if IsValid(tonumber(args[1])) then
 	
 		for i=1,args[1] do
 			player.CreateNextBot("Bot"..#player.GetBots()+1).hurtmode = 1

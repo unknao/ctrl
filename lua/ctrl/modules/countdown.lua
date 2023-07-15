@@ -72,6 +72,7 @@ if CLIENT then
 		[1] = "npc/overwatch/radiovoice/one.wav",
 		
 	}
+	local fancymaterial = Material("color")
 	
 	surface.CreateFont("ctrl.countdown", {
 		font = "Arial",
@@ -156,6 +157,7 @@ if CLIENT then
 				end
 
 				render.CullMode(1)
+				render.SetMaterial(fancymaterial)
 				render.DrawSphere(EyePos(), 10 + 32000 * Fraction, 50, 50, Color(255, 255, 255, 255 * (1 - Fraction)))
 				render.CullMode(0)
 				

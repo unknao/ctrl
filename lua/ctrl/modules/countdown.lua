@@ -44,7 +44,7 @@ if SERVER then
 	end
 	
 	function ctrl.abort()
-	
+		
 		ctrl.msg("Countdown aborted.")
 		timer.Stop("ctrl.countdown")
 		hook.Remove("FinishedLoading", "ctrl.countdown")
@@ -64,7 +64,6 @@ if CLIENT then
 		[60] = "npc/overwatch/cityvoice/fcitadel_1minutetosingularity.wav",
 		[30] = "npc/overwatch/cityvoice/fcitadel_30sectosingularity.wav",
 		[15] = "npc/overwatch/cityvoice/fcitadel_15sectosingularity.wav",
-		[7] = "ambient/levels/citadel/citadel_flyer1.wav",
 		[5] = "npc/overwatch/radiovoice/five.wav",
 		[4] = "npc/overwatch/radiovoice/four.wav",
 		[3] = "npc/overwatch/radiovoice/three.wav",
@@ -72,7 +71,6 @@ if CLIENT then
 		[1] = "npc/overwatch/radiovoice/one.wav",
 		
 	}
-	local fancymaterial = Material("color")
 	
 	surface.CreateFont("ctrl.countdown", {
 		font = "Arial",
@@ -125,16 +123,36 @@ if CLIENT then
 		end)
 		
 		if fancy then
-		
-			local Rumble = CreateSound(game.GetWorld(), "ambient/atmosphere/cave_outdoor1.wav")
-			if Rumble then
-				Rumble:SetSoundLevel(0)
+			
+			local fancysounds = {
+				"ambient/atmosphere/city_tone.wav",
+				"ambient/atmosphere/underground.wav",
+				"ambient/atmosphere/cave_outdoor1.wav",
+				"ambient/voices/appartments_crowd_loop1.wav",
+				"ambient/atmosphere/tone_quiet.wav",
+				"ambient/energy/electric_loop.wav",
+				"ambient/atmosphere/cargo_hold1.wav",
+			}
+			ctrl.Sounds = ctrl.Sounds or {}
+			
+			if table.IsEmpty(ctrl.Sounds) then
+				for i, v in ipairs(fancysounds) do
+					ctrl.Sounds[i] = CreateSound(game.GetWorld(), v)
+					if ctrl.Sounds[i] then ctrl.Sounds[i]:SetSoundLevel(0) end
+				end
 			end
+			
+			local SoundStartTime = math.max(remainder - 10, 0)
+			timer.Create("ctrl.countdown.fancysounds", SoundStartTime, 1, function()
+				for i, v in ipairs(ctrl.Sounds) do
+					v:PlayEx(0, 100)
+				end
+			end)
 			
 			local LastTime, Time = 0
 			--Make it look like the end of the world.
 			hook.Add("PostDrawTranslucentRenderables", "ctrl.countdown", function(bDepth, bSkybox)
-
+				
 				if bSkybox  then return end
 				
 				local TimeRemaining = math.max(((CountdownStarted + duration) - RealTime()), 0)
@@ -145,19 +163,21 @@ if CLIENT then
 				Time = math.ceil(TimeRemaining)
 				
 				if Fraction < 1 then
+				
 					util.ScreenShake(Vector(0, 0, 0), math.ease.InExpo(1 - Fraction) * 6, 50, 0.1, 0)
+					
+					for i, v in ipairs(ctrl.Sounds) do
+						v:ChangeVolume(math.ease.InExpo(1 - Fraction))
+					end
+					
 				end
 				
 				if LastTime ~= Time and fancylines[Time] then
-					if Time == 7 then
-						Rumble:PlayEx(0, 100)
-						Rumble:ChangeVolume(1, 7)
-					end
 					surface.PlaySound(fancylines[Time])
 				end
-
+				
 				render.CullMode(1)
-				render.SetMaterial(fancymaterial)
+				render.SetColorMaterial()
 				render.DrawSphere(EyePos(), 10 + 32000 * Fraction, 50, 50, Color(255, 255, 255, 255 * (1 - Fraction)))
 				render.CullMode(0)
 				
@@ -171,6 +191,8 @@ if CLIENT then
 			hook.Remove("HUDPaint", "ctrl.countdown")
 			timer.Simple(2, function()
 				hook.Remove("PostDrawTranslucentRenderables", "ctrl.countdown")
+				for i, v in ipairs(ctrl.Sounds) do v:Stop() end
+				surface.PlaySound("buttons/lightswitch2.wav")
 			end)
 			
 		end)
@@ -182,6 +204,9 @@ if CLIENT then
 		hook.Remove("HUDPaint", "ctrl.countdown")
 		hook.Remove("PostDrawTranslucentRenderables", "ctrl.countdown")
 		timer.Stop("ctrl.countdown")
+		timer.Stop("ctrl.countdown.fancysounds")
+		
+		for i, v in ipairs(ctrl.Sounds) do v:Stop() end
 		surface.PlaySound("buttons/button1.wav")
 		
 	end)

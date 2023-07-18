@@ -2,12 +2,16 @@ if SERVER then
 	
 	util.AddNetworkString("ctrl.countdown")
 	util.AddNetworkString("ctrl.abort")
+	
+	require("finishedloading")
+	
 	local CountdownStarted = RealTime()
 	
-	function ctrl.countdown(duration, remainder, name, fancy, func, ...)
+	function ctrl.countdown(duration, name, fancy, func, ...)
 		
 		ctrl.msg("Countdown started, duration: "..duration.." seconds")
 		local duration = duration
+		local remainder = duration
 		CountdownStarted = RealTime()
 		local vararg = {...}
 		

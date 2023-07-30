@@ -11,7 +11,7 @@ local damagemodes = {
 	[1] = {"Mortal", false},
 	[2] = {"God", false},
 	[3] = {"Buddha", false},
-	[4] = {"Only mortals can hurt you", false},
+	[4] = {"Only Mortals can hurt you", false},
 	[5] = {"Damage reflection", true},
 	[6] = {"Attacker drops weapon", true},
 	[7] = {"Attacker instantly dies", true}
@@ -161,7 +161,16 @@ if SERVER then
 end
 
 if SERVER then return end
-local cl_damagemode = CreateConVar("ctrl_cl_damagemode", "1", {FCVAR_ARCHIVE}, "Changes the way you take damage, see Options -> CTRL -> Damage Mode for proper usage.")
+local cl_damagemode = CreateConVar("ctrl_cl_damagemode", "4", {FCVAR_ARCHIVE}, [[
+	Changes the way you take damage, see Options -> CTRL -> Damage Mode for proper usage.
+	1 - Mortal,
+	2 - God,
+	3 - Buddha,
+	4 - Only Mortals can hurt you
+	5 - Damage reflection (Admin only)
+	6 - Attacker drops weapon (Admin only)
+	7 - Attacker dies instantly (Admin only)
+]])
 
 hook.Add("PopulateToolMenu", tag, function()
 	spawnmenu.AddToolMenuOption( "Options", "CTRL", "Damage Mode", "#Damage Mode", "", "", function(pnl)
@@ -179,14 +188,14 @@ end)
 
 cvars.AddChangeCallback("ctrl_cl_damagemode", function(_, _, val)
 	net.Start(tag)
-	net.WriteInt(val, 6)
+	net.WriteInt(math.Clamp(val, 1, #damagemodes), 6)
 	net.SendToServer()
 end, "nettrigger")
 
 --Run once on join completion
 hook.Add("HUDPaint", "ctrl_damagemode_setinitial", function()
 	net.Start(tag)
-	net.WriteInt(cl_damagemode:GetInt(), 6)
+	net.WriteInt(math.Clamp(cl_damagemode:GetInt(), 1, #damagemodes), 6)
 	net.SendToServer()
 	hook.Remove("HUDPaint", "ctrl_damagemode_setinitial")
 end)

@@ -3,7 +3,7 @@ ctrl.AddCommand({"god", "godmode"},function(ply)
 	ctr.msg(string.format("Godmode %s.", ply:HasGodMode() and "enabled" or "disabled"))
 end, '<no args>: toggles between "God" and "Mortal" modes.', false, false, CLIENT)
 
-ctrl.AddCommand("butterfingers",function(ply)
+ctrl.AddCommand("buddha",function(ply)
 	local dmgmode = GetConVar("ctrl_cl_damagemode"):GetInt()
 	
 	RunConsoleCommand("ctrl_cl_damagemode", (dmgmode ~= 3) and 3 or 1)

@@ -157,36 +157,38 @@ if CLIENT then
 			--Make it look like the end of the world.
 			hook.Add("PostDrawTranslucentRenderables", "ctrl.countdown", function(bDepth, bSkybox)
 				
-				if bSkybox  then return end
-				
 				local TimeRemaining = math.max(((CountdownStarted + duration) - RealTime()), 0)
-				
 				local Fraction = math.min(TimeRemaining / math.min(remainder, 10), 1)
 				
 				LastTime = Time
 				Time = math.ceil(TimeRemaining)
 				
-				if Fraction < 1 then
-				
-					util.ScreenShake(Vector(0, 0, 0), math.ease.InExpo(1 - Fraction) * 6, 50, 0.1, 0)
-					
-					for i, v in ipairs(ctrl.Sounds) do
-						v:ChangeVolume(math.ease.InExpo(1 - Fraction))
-					end
-					
-				end
-				
 				if LastTime ~= Time and fancylines[Time] then
 					surface.PlaySound(fancylines[Time])
 				end
 				
-				render.CullMode(1)
-				render.SetColorMaterial()
-				render.DrawSphere(EyePos(), 10 + 32000 * Fraction, 50, 50, Color(255, 255, 255, 255 * (1 - Fraction)))
-				render.CullMode(0)
+				if Fraction == 1 then return end
 				
+				util.ScreenShake(Vector(0, 0, 0), math.ease.InExpo(1 - Fraction) * 6, 50, 0.1, 0)
+				
+				for i, v in ipairs(ctrl.Sounds) do
+					v:ChangeVolume(math.ease.InExpo(1 - Fraction))
+				end
+				
+				render.SetColorMaterial()
+				local multi = math.ease.OutExpo(1 - math.max((1 - Fraction) * 1.1 - 1, 0) * 10)
+				local drawcolor = Color(255 * multi, 255 * multi, 255 * multi, 255 * math.min((1 - Fraction) * 1.2, 1))
+				surface.SetDrawColor(drawcolor)
+				
+				for _ = 1, math.floor(math.ease.InCirc(1 - Fraction) * 5000) do
+					local Vec = Vector(math.random(-32767, 32767), math.random(-32767, 32767), -32767)
+					render.DrawBeam(Vec, Vec + Vector(0, 0, 65534), 5, 1, 1, color_white)
+				end
+				
+				render.CullMode(1)
+				render.DrawSphere(EyePos(), 10 + (32000 * Fraction) * (bSkybox and 0.0625 or 1), 50, 50, drawcolor)
+				render.CullMode(0)
 			end)
-			
 		end
 		
 		timer.Create("ctrl.countdown", duration, 1, function()

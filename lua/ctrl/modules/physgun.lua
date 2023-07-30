@@ -35,6 +35,7 @@ hook.Add("PhysgunDrop",tag,function(ply,ent)
 		ent:SetMoveType(MOVETYPE_WALK)
 	end
 	
+	if not ent._Vel then return end
 	ent:SetVelocity(ent._Vel * 10)
 end)
 

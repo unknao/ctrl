@@ -1,201 +1,116 @@
 local tag = "ctrl_damagemode"
 
-local PLAYER = getmetatable("Player")
+local PLAYER = FindMetaTable("Player")
 
 function PLAYER:HasGodMode()
 	return self:GetNWBool("HasGodMode", true)
 end
 
---Name, SuperAdmin only?
-local damagemodes = {
-	[1] = {"Mortal", false},
-	[2] = {"God", false},
-	[3] = {"Buddha", false},
-	[4] = {"Only Mortals can hurt you", false},
-	[5] = {"Damage reflection", true},
-	[6] = {"Attacker drops weapon", true},
-	[7] = {"Attacker instantly dies", true}
-}
+local damagemodes = {}
 
 if SERVER then
+	function PLAYER:GodEnable()
+		ctrl.SetDamageMode(self, "god")
+	end
+
+	function PLAYER:GodDisable()
+		ctrl.SetDamageMode(self, "mortal")
+	end
+
 	util.AddNetworkString(tag)
+	util.AddNetworkString("ctrl_network_damagemodes")
+	
 	require("finishedloading")
 	
-	net.Receive(tag, function(_, ply)
-		local dmode = net.ReadInt(6)
-		local dmode = math.Clamp(dmode, 1, #damagemodes) -- no funny business
+	function ctrl.SetDamageMode(ply, mode)
+		if not IsValid(ply) then return end
+		local mode = string.lower(mode)
 		
-		if damagemodes[dmode][2] then
-			if not ply:IsAdmin() then 
-				dmode = 1
-			end
+		if damagemodes[mode] == nil then mode = "mortal" end
+		if damagemodes[mode][1] and not ply:IsAdmin() then mode = "mortal" end
+	
+		if ply.ctrl_damagemode ~= mode then
+			hook.Run("ctrl_damagemode_changed", ply, ply.ctrl_damagemode, mode)
+			ply:SetNWBool("HasGodMode", damagemodes[mode][2])
+			
+			ply.ctrl_damagemode = mode
 		end
+	end
+	
+	hook.Add("ctrl_damagemode_changed", "ctrl_damagemode_change_info", function(ply, last, current)
+		if not last then return end
 		
-		ply:SetNWBool("HasGodMode", not(dmode == 1 or dmode == 4))
-		timer.Remove("ctrl_damagemode_fallback")
-		ply.damagemode = dmode
+		ctrl.msg(string.format('%s changed their damage mode from "%s" to "%s".', ply:Name(), last, current))
 	end)
 	
+	local damagemode_funcs = {}
+	function ctrl.RegisterDamageMode(name, adminonly, is_technically_godmode, func)
+		damagemode_funcs[name] = func
+		damagemodes[name] = {adminonly, is_technically_godmode}
+	end	
+	
+	net.Receive(tag, function(_, ply)
+		local mode = net.ReadString()
+		
+		timer.Remove("ctrl_damagemode_fallback")
+		ctrl.SetDamageMode(ply, mode)
+	end)
+	
+	--Network the damage modes table to clients on join completion
 	hook.Add("FinishedLoading", tag, function(ply)
+		net.Start("ctrl_network_damagemodes")
+		net.WriteTable(damagemodes)
+		net.Send(ply)
+	
 		timer.Create("ctrl_damagemode_fallback", 10, 1, function()
 			ctrl.msg(string.format("%s failed to request a damage mode, setting to mortal.", ply:Name()))
-			ply.damagemode = 1
-			ply:SetNWBool("HasGodMode", false)
+			ctrl.SetDamageMode(ply, "mortal")
 		end)
 	end)
-	
-	--FUNCTIONS (probably a better way of doing this)
-	local damagemode_funcs = {
-		[1] = function(ply, dmg) end, --Mortal
-		
-		[2] = function(ply, dmg) --God
-			return dmg:IsFallDamage() or dmg:GetDamageCustom() ~= 1337
-		end,
-		
-		[3] = function(ply, dmg) --Buddha
-			if dmg:GetDamageCustom() == 1337 then return end
-			dmg:SetDamageType(DMG_RADIATION)
-			ply:SetVelocity(dmg:GetDamageForce() * 0.03) -- needed or else it stops setting player force
-			dmg:SetDamageForce(Vector(0, 0, 0))
-			dmg:SetDamage(math.min(ply:Health() - 1, dmg:GetDamage()))
-		end,
-		
-		[4] = function(ply, dmg) --Only mortals can hurt you
-			local attacker = dmg:GetAttacker()
-			
-			if not attacker:IsPlayer() then
-				attacker = attacker:CPPIGetOwner()
-			end
-			
-			if attacker.damagemode == 1 then return end -- Mortal
-			if attacker.damagemode == 4 then return end -- Same as us
-			
-			return dmg:GetDamageCustom() ~= 1337
-		end,
-		
-		[5] = function(ply, dmg) --Damage reflection
-			if dmg:IsFallDamage() then return true end
-			local attacker = dmg:GetAttacker()
-			
-			if attacker == ply then return true end
-			--Don't affect anyone with admin damagemodes
-			if attacker.damagemode then
-				if damagemodes[attacker.damagemode][2] then return true end
-			end
-			
-			if not attacker:IsPlayer() and not attacker:IsNPC() then
-				local phys = attacker:GetPhysicsObject()
-				if not IsValid(phys) then return true end
-				
-				phys:ApplyForceOffset(dmg:GetDamageForce(), dmg:GetDamagePosition())
-				attacker:TakeDamageInfo(dmg)
-			end
-			ply:EmitSound("FX_RicochetSound.Ricochet")
-			
-			local pos = ply:WorldToLocal(dmg:GetDamagePosition())
-			dmg:SetAttacker(ply)
-			dmg:SetDamageCustom(1337) --For damaging others through godmode
-			dmg:SetDamageForce(-dmg:GetDamageForce())
-			dmg:SetDamagePosition(attacker:LocalToWorld(pos))
-			
-			attacker:TakeDamageInfo(dmg)
-			return true
-		end,
-		
-		[6] = function(ply, dmg) --Attacker drops weapon
-			local attacker = dmg:GetAttacker()
-			if attacker == ply then return true end
-			
-			--Don't affect anyone with admin damagemodes
-			if attacker.damagemode then
-				if damagemodes[attacker.damagemode][2] then return true end
-			end
-			
-			if not (attacker:IsPlayer() or attacker:IsNPC()) then return end
-			local wep = attacker:GetActiveWeapon()
-			
-			if IsValid(wep) then
-				attacker:DropWeapon(wep)
-				
-				else
-				
-				for k, v in pairs(constraint.GetAllConstrainedEntities(attacker)) do
-					if not v:IsVehicle() then continue end
-					local driver = v:GetDriver()
-					
-					if IsValid(driver) then driver:ExitVehicle() end
-				end
-			end
-			
-			return true
-		end,
-		
-		[7] = function(ply, dmg) --Attacker instantly dies
-			local attacker = dmg:GetAttacker()
-			if attacker == ply then return true end
-			
-			--Don't affect anyone with admin damagemodes
-			if attacker.damagemode then
-				if damagemodes[attacker.damagemode][2] then return true end
-			end
-			
-			if attacker:IsPlayer() or attacker:IsNPC() then
-				dmg:SetAttacker(ply)
-				dmg:SetDamageCustom(1337) --For damaging others through godmode
-				dmg:SetDamage(math.huge)
-				attacker:TakeDamageInfo(dmg)
-			end
-			
-			return true
-		end
-	}
-	--END OF FUNCTIONS
-		
+
 	hook.Add("EntityTakeDamage", tag, function(ply, dmg)
 		if not IsValid(ply) then return end
 		if not ply:IsPlayer() then return end
-		if not ply.damagemode then return true end
+		if not ply.ctrl_damagemode then return end
 			
-		return damagemode_funcs[ply.damagemode](ply, dmg)
+		return damagemode_funcs[ply.ctrl_damagemode](ply, dmg)
 	end)
+	
+	ctrl.LoadFolder("ctrl/modules/damagemodes/", true)
 end
 
 if SERVER then return end
-local cl_damagemode = CreateConVar("ctrl_cl_damagemode", "4", {FCVAR_ARCHIVE}, [[
-	Changes the way you take damage, see Options -> CTRL -> Damage Mode for proper usage.
-	1 - Mortal,
-	2 - God,
-	3 - Buddha,
-	4 - Only Mortals can hurt you
-	5 - Damage reflection (Admin only)
-	6 - Attacker drops weapon (Admin only)
-	7 - Attacker dies instantly (Admin only)
-]])
+local cl_damagemode = CreateConVar("ctrl_cl_damagemode", "mortal", {FCVAR_ARCHIVE}, "Changes the way you take damage, see Options -> CTRL -> Damage Mode for proper usage.")
 
 hook.Add("PopulateToolMenu", tag, function()
 	spawnmenu.AddToolMenuOption( "Options", "CTRL", "Damage Mode", "#Damage Mode", "", "", function(pnl)
 		local Cbox = pnl:ComboBox("Damage Mode", "ctrl_cl_damagemode")
 		
-		for i, v in ipairs(damagemodes) do
-			if v[2] then 
+		for i, v in pairs(damagemodes) do
+			if v[1] then 
 				if not LocalPlayer():IsSuperAdmin() then continue end
 			end
 			
-			Cbox:AddChoice(v[1], i)
+			Cbox:AddChoice(i, nil, false, v[1] and "icon16/shield.png" or "icon16/user_suit.png")
 		end
 	end)
 end)
 
 cvars.AddChangeCallback("ctrl_cl_damagemode", function(_, _, val)
 	net.Start(tag)
-	net.WriteInt(math.Clamp(val, 1, #damagemodes), 6)
+	net.WriteString(string.lower(val))
 	net.SendToServer()
 end, "nettrigger")
 
---Run once on join completion
-hook.Add("HUDPaint", "ctrl_damagemode_setinitial", function()
+net.Receive("ctrl_network_damagemodes", function()
+	damagemodes = net.ReadTable()
+	hook.Run("PopulateToolMenu")
+end)
+
+--Run once on join
+hook.Add("Think", "ctrl_damagemode_setinitial", function()
 	net.Start(tag)
-	net.WriteInt(math.Clamp(cl_damagemode:GetInt(), 1, #damagemodes), 6)
+	net.WriteString(string.lower(cl_damagemode:GetString()))
 	net.SendToServer()
-	hook.Remove("HUDPaint", "ctrl_damagemode_setinitial")
+	hook.Remove("Think", "ctrl_damagemode_setinitial")
 end)

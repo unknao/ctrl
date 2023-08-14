@@ -154,7 +154,7 @@ if CLIENT then
 			end)
 			
 			local LastTime, Time = 0, 0
-			local BeamPos1, BeamPos2, DrawColor = Vector(0, 0, 0), Vector(0, 0, 0), Color(255, 255 ,255) --Caching for faster runtime
+			local BeamPos1, BeamPos2 = Vector(0, 0, 0), Vector(0, 0, 0) --Caching for faster runtime
 			
 			--Make it look like the end of the world.
 			hook.Add("PostDrawTranslucentRenderables", "ctrl.countdown", function(bDepth, bSkybox)
@@ -179,13 +179,8 @@ if CLIENT then
 				
 				render.SetColorMaterial()
 				local multi = math.ease.OutExpo(1 - math.max((1 - Fraction) * 1.1 - 1, 0) * 10)
-				
-				DrawColor.r = 255 * mult
-				DrawColor.g = 255 * mult
-				DrawColor.b = 255 * mult
-				DrawColor.a = 255 * math.min((1 - Fraction) * 1.2, 1)
-				
-				surface.SetDrawColor(DrawColor)
+
+				surface.SetDrawColor(255 * mult, 255 * mult, 255 * mult, 255 * math.min((1 - Fraction) * 1.2, 1))
 				for _ = 1, math.floor(math.ease.InCirc(1 - Fraction) * 5000) do
 					local x, y = math.random(-32767, 32767), math.random(-32767, 32767)
 					BeamPos1:SetUnpacked(x, y, -32767)

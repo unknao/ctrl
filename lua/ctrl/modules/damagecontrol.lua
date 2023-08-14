@@ -108,9 +108,9 @@ net.Receive("ctrl_network_damagemodes", function()
 end)
 
 --Run once on join
-hook.Add("Think", "ctrl_damagemode_setinitial", function()
+hook.Add("HUDPaint", "ctrl_damagemode_setinitial", function()
 	net.Start(tag)
 	net.WriteString(string.lower(cl_damagemode:GetString()))
 	net.SendToServer()
-	hook.Remove("Think", "ctrl_damagemode_setinitial")
+	hook.Remove("HUDPaint", "ctrl_damagemode_setinitial")
 end)

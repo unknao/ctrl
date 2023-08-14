@@ -38,14 +38,13 @@ ctrl.RegisterDamageMode("attacker instantly dies", true, true, function(ply, dmg
 		if damagemodes[attacker.damagemode][2] then return true end
 	end
 	
-	if attacker:IsPlayer() or attacker:IsNPC() then
-		dmg:SetAttacker(ply)
-		dmg:SetDamageCustom(1337) --For damaging others through godmode
-		dmg:SetDamage(math.huge)
-		attacker:TakeDamageInfo(dmg)
-	else
-		attacker:GibBreakClient(-dmg:GetDamageForce() * 2)
-	end
+	dmg:SetAttacker(ply)
+	attacker:Ignite(50)
+	dmg:SetDamageType(DMG_DISSOLVE)
+	dmg:SetDamageCustom(1337) --For damaging others through godmode
+	dmg:SetDamageForce(-dmg:GetDamageForce())
+	dmg:SetDamage(math.huge)
+	attacker:TakeDamageInfo(dmg)
 	
 	return true
 end)

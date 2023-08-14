@@ -153,7 +153,9 @@ if CLIENT then
 				end
 			end)
 			
-			local LastTime, Time = 0
+			local LastTime, Time = 0, 0
+			local BeamPos1, BeamPos2, DrawColor = Vector(0, 0, 0), Vector(0, 0, 0), Color(255, 255 ,255) --Caching for faster runtime
+			
 			--Make it look like the end of the world.
 			hook.Add("PostDrawTranslucentRenderables", "ctrl.countdown", function(bDepth, bSkybox)
 				
@@ -169,7 +171,7 @@ if CLIENT then
 				
 				if Fraction == 1 then return end
 				
-				util.ScreenShake(Vector(0, 0, 0), math.ease.InExpo(1 - Fraction) * 6, 50, 0.1, 0)
+				util.ScreenShake(vector_origin, math.ease.InExpo(1 - Fraction) * 6, 50, 0.1, 0)
 				
 				for i, v in ipairs(ctrl.Sounds) do
 					v:ChangeVolume(math.ease.InExpo(1 - Fraction))
@@ -177,16 +179,22 @@ if CLIENT then
 				
 				render.SetColorMaterial()
 				local multi = math.ease.OutExpo(1 - math.max((1 - Fraction) * 1.1 - 1, 0) * 10)
-				local drawcolor = Color(255 * multi, 255 * multi, 255 * multi, 255 * math.min((1 - Fraction) * 1.2, 1))
-				surface.SetDrawColor(drawcolor)
 				
+				DrawColor.r = 255 * mult
+				DrawColor.g = 255 * mult
+				DrawColor.b = 255 * mult
+				DrawColor.a = 255 * math.min((1 - Fraction) * 1.2, 1)
+				
+				surface.SetDrawColor(DrawColor)
 				for _ = 1, math.floor(math.ease.InCirc(1 - Fraction) * 5000) do
-					local Vec = Vector(math.random(-32767, 32767), math.random(-32767, 32767), -32767)
-					render.DrawBeam(Vec, Vec + Vector(0, 0, 65534), 5, 1, 1, color_white)
+					local x, y = math.random(-32767, 32767), math.random(-32767, 32767)
+					BeamPos1:SetUnpacked(x, y, -32767)
+					BeamPos2:SetUnpacked(x, y, 32767)
+					render.DrawBeam(BeamPos1, BeamPos2, 5, 1, 1, DrawColor)
 				end
 				
 				render.CullMode(1)
-				render.DrawSphere(EyePos(), 10 + (32000 * Fraction) * (bSkybox and 0.0625 or 1), 50, 50, drawcolor)
+				render.DrawSphere(EyePos(), 10 + (32000 * Fraction) * (bSkybox and 0.0625 or 1), 50, 50, DrawColor)
 				render.CullMode(0)
 			end)
 		end

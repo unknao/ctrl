@@ -1,6 +1,14 @@
-if not SERVER then return end
-
 local tag = "FinishedLoading"
+AddCSLuaFile()
+
+if CLIENT then
+	hook.Add("Think", tag, function()
+		hook.Run(tag)
+		hook.Remove("Think", tag)
+	end)
+end
+
+if not SERVER then return end
 
 hook.Add("PlayerInitialSpawn", tag, function(ply)
 	if ply:IsBot() then return end

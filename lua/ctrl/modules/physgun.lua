@@ -30,7 +30,7 @@ hook.Add("PhysgunPickup", tag, function(ply, ent)
 		ent:Freeze(false)
 		ent:SetMoveType(MOVETYPE_NOCLIP)
 
-		undo.Create("player")
+		undo.Create("Player")
 		undo.AddEntity(ent)
 		undo.SetPlayer(ply)
 		undo.AddFunction(function(tab)

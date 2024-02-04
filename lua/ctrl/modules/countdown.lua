@@ -57,6 +57,9 @@ if SERVER then
 
 	end
 
+	concommand.Add("ctrltestcountdown", function()
+		ctrl.countdown(10, "testing countdown", true, print, "hi")
+	end)
 end
 
 if CLIENT then
@@ -154,7 +157,9 @@ if CLIENT then
 			end)
 
 			local LastTime, Time = 0, 0
-			local BeamPos1, BeamPos2 = Vector(0, 0, 0), Vector(0, 0, 0) --Caching for faster runtime
+			local BeamPos1, BeamPos2, vec = Vector(0, 0, 0), Vector(0, 0, 0), Vector(1, 1, 1) --Caching for faster runtime
+			local m = Matrix()
+			local DrawColor = Color(255, 255, 255, 0)
 
 			--Make it look like the end of the world.
 			hook.Add("PostDrawTranslucentRenderables", "ctrl.countdown", function(bDepth, bSkybox)
@@ -180,17 +185,25 @@ if CLIENT then
 				render.SetColorMaterial()
 				local mult = math.ease.OutExpo(1 - math.max((1 - Fraction) * 1.1 - 1, 0) * 10)
 
-				surface.SetDrawColor(255 * mult, 255 * mult, 255 * mult, 255 * math.min((1 - Fraction) * 1.2, 1))
+				DrawColor.r = 255 * mult
+				DrawColor.g = 255 * mult
+				DrawColor.b = 255 * mult
+				DrawColor.a = 255 * math.min((1 - Fraction) * 1.2, 1)
+
 				for _ = 1, math.floor(math.ease.InCirc(1 - Fraction) * 5000) do
 					local x, y = math.random(-32767, 32767), math.random(-32767, 32767)
 					BeamPos1:SetUnpacked(x, y, -32767)
 					BeamPos2:SetUnpacked(x, y, 32767)
 					render.DrawBeam(BeamPos1, BeamPos2, 5, 1, 1, DrawColor)
 				end
-
-				render.CullMode(1)
-				render.DrawSphere(EyePos(), 10 + (32000 * Fraction) * (bSkybox and 0.0625 or 1), 50, 50, DrawColor)
-				render.CullMode(0)
+				m:Identity()
+				m:SetTranslation(EyePos())
+				m:Scale(vec * (10 + 10000 * Fraction))
+				cam.PushModelMatrix(m)
+					render.CullMode(1)
+					render.DrawSphere(vector_origin, 1, 50, 50, DrawColor)
+					render.CullMode(0)
+				cam.PopModelMatrix()
 			end)
 		end
 

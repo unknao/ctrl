@@ -6,33 +6,33 @@ local function text2command(txt)
 end
 
 if SERVER then
-	
+
 	hook.Add("PlayerSay", "ctrlcmd", function(ply, str)
-	
+
 		local txt = string.lower(str)
 		if not string.match(txt[1], ctrl.prefix) then return end
 		txt=string.gsub(txt, "^"..ctrl.prefix, "")
 		local cmd, args, str = text2command(txt)
-		
+
 		net.Start("ctrlcmd")
 		net.WriteTable({cmd, args, str})
 		net.Send(ply)
-		
+
 		if not ctrl.cmds[cmd].showchat then return "" end
-		
+
 	end)
-	
+
 end
 
 if CLIENT then
 	net.Receive("ctrlcmd", function()
 		ctrl.CallCommand(LocalPlayer(), unpack(net.ReadTable()))
 	end)
-	
+
 	concommand.Add("ctrl", function(ply, cmd, args, argstr)
 		if #argstr==0 then return end
 		ctrl.CallCommand(ply, text2command(argstr))
-	end, 
+	end,
 	function(cmd, args)
 		local ply=LocalPlayer()
 		local tbl={}

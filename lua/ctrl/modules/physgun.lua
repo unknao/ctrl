@@ -1,7 +1,7 @@
 local tag = "ctrl_physgun_admin"
 local tHeldPlayers = {}
 
-require("slowhooks")
+require("slowthink")
 
 if SERVER then
 	hook.Add("OnPhysgunReload", tag, function(_, ply)
@@ -76,7 +76,7 @@ hook.Add("PlayerBindPress", tag, function(ply, bind)
 end)
 
 --Calculate speed of the throw
-hook.Add("SlowTick", tag, function()
+hook.Add("SlowThink", tag, function()
 	for ent, v in pairs(tHeldPlayers) do
 		if not IsValid(ent) then
 			v = nil

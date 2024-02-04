@@ -6,7 +6,6 @@ module( "undo", package.seeall )
 -- undo.AddEntity( constraint )
 -- undo.SetPlayer( self.Owner )
 -- undo.Finish()
-print("I RAN LIKE A LOT!!!!!!!!!!!!!!!!!!!!")
 if ( CLIENT ) then
 
 	local ClientUndos = {}

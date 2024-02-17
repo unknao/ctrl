@@ -1,16 +1,16 @@
-ctrl.issues={}
+ctrl.issues = {}
 ctrl.filesloaded = 0
 
 function ctrl.EntByString(str)
-	if #str==0 then
+	if #str == 0 then
 		return "Invalid String!"
 	end
 	local lower = string.lower(str)
-	local tbl={}
+	local tbl = {}
 	--1st pass
 	for k, v in pairs(player.GetAll()) do
-		if v:Name()==str then return v end
-		if string.find(string.lower(v:Name()), lower, 1, true) then tbl[#tbl+1]=v end
+		if v:Name() == str then return v end
+		if string.find(string.lower(v:Name()), lower, 1, true) then tbl[#tbl + 1] = v end
 	end
 	if tbl[1] then
 		return tbl[1]
@@ -21,30 +21,29 @@ end
 
 function ctrl.msg(str)
 	if SERVER then
-		MsgC(Color(74, 255, 137), os.date("[%X][CTRL]: "), Color(255, 237, 74), str, "\n")
+		MsgC(Color(148, 255, 61), os.date("[%X][CTRL]: "), Color(235, 255, 218), str, "\n")
 	else
-		chat.AddText(Color(74, 255, 137), os.date("[%X][CTRL]: "), Color(255, 237, 74), str)
+		chat.AddText(Color(148, 255, 61), "[CTRL]: ", Color(235, 255, 218), str)
 	end
 end
 
-function ctrl.err(str)
-	MsgC(Color(255, 105, 41), os.date("[%X][CTRL]: "), Color(255, 225, 79), str, "\n")
-	if CLIENT then
+function ctrl.err(str, bAudible)
+	MsgC(Color(255, 105, 41), os.date("[%X][CTRL]: "), Color(255, 203, 181), str, "\n")
+	if CLIENT and bAudible then
 		notification.AddLegacy(str, NOTIFY_ERROR, 3)
 		surface.PlaySound("buttons/button8.wav")
 	end
 end
 
 function ctrl.LoadFolder(path, serveronly)
-	local severonly = serveronly or false
-	local files=file.Find(path.."*.lua", "LUA")
+	local files = file.Find(path .. "*.lua", "LUA")
 
 	for k, v in pairs(files) do
-		if not serveronly then AddCSLuaFile(path..v) end
+		if not serveronly then AddCSLuaFile(path .. v) end
 
-		local ok, err=pcall(include, path..v)
+		local ok, err = pcall(include, path .. v)
 		if not ok then
-			ctrl.issues[#ctrl.issues+1]=string.format("%s%s %s", path, v, err)
+			ctrl.issues[#ctrl.issues + 1] = string.format("%s%s %s", path, v, err)
 			continue
 		end
 

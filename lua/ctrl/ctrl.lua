@@ -1,13 +1,12 @@
-local speed=SysTime()
+local speed = SysTime()
 
 hook.Add("ctrl_initialized", "ctrlinit", function(inittime)
 	ctrl.msg(string.format("Initialized! (Took %G ms)",inittime))
 end)
 
-
-ctrl=ctrl or {}
-ctrl.prefix="[!./]"
-ctrl.seperator="^%w+."
+ctrl = ctrl or {}
+ctrl.prefix = "[!./]"
+ctrl.seperator = "^%w+."
 
 AddCSLuaFile("ctrl/func.lua")
 AddCSLuaFile("ctrl/load.lua")
@@ -23,4 +22,4 @@ if CLIENT then
 	end)
 end
 
-hook.Run("ctrl_initialized", (SysTime()-speed) * 1000)
+hook.Run("ctrl_initialized", (SysTime() - speed) * 1000)

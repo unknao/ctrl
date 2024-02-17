@@ -95,7 +95,6 @@ cvars.AddChangeCallback("ctrl_cl_damagemode", function(_, old, new)
 	net.Start(tag)
 	net.WriteString(string.lower(new))
 	net.SendToServer()
-	ctrl.msg(string.format("%s -> %s", old, new))
 end, "nettrigger")
 
 net.Receive("ctrl_network_damagemodes", function()

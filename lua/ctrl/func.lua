@@ -19,11 +19,15 @@ function ctrl.EntByString(str)
 	end
 end
 
-function ctrl.msg(str)
+function ctrl.msg(str, bShowChat)
 	if SERVER then
 		MsgC(Color(148, 255, 61), os.date("[%X][CTRL]: "), Color(235, 255, 218), str, "\n")
 	else
-		chat.AddText(Color(148, 255, 61), "[CTRL]: ", Color(235, 255, 218), str)
+		if bShowChat then
+			chat.AddText(Color(148, 255, 61), "[CTRL]: ", Color(235, 255, 218), str)
+		else
+			MsgC(Color(148, 255, 61), os.date("[%X][CTRL]: "), Color(235, 255, 218), str, "\n")
+		end
 	end
 end
 

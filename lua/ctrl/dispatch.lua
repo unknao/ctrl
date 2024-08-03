@@ -6,12 +6,11 @@ local function ctrl_text_to_concmd(txt)
 end
 
 if SERVER then
-
 	hook.Add("PlayerSay", "ctrlcmd", function(ply, said)
 
 		local txt = string.lower(said)
 		if not string.match(txt[1], ctrl.prefix) then return end
-		txt:gsub("^" .. ctrl.prefix, "")
+		txt = string.gsub(txt, "^" .. ctrl.prefix, "")
 		local cmd, args, str = ctrl_text_to_concmd(txt)
 
 		net.Start("ctrlcmd")
@@ -19,9 +18,7 @@ if SERVER then
 		net.Send(ply)
 
 		if not ctrl.cmds[cmd].showchat then return "" end
-
 	end)
-
 end
 
 if CLIENT then

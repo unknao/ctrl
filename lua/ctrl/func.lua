@@ -1,5 +1,5 @@
 ctrl.issues = {}
-ctrl.filesloaded = 0
+ctrl.filesLoaded = 0
 
 function ctrl.EntByString(str)
 	if #str == 0 then
@@ -19,7 +19,7 @@ function ctrl.EntByString(str)
 	end
 end
 
-function ctrl.msg(str, bShowChat)
+function ctrl.message(str, bShowChat)
 	if SERVER then
 		MsgC(Color(148, 255, 61), os.date("[%X][CTRL]: "), Color(235, 255, 218), str, "\n")
 	else
@@ -31,7 +31,7 @@ function ctrl.msg(str, bShowChat)
 	end
 end
 
-function ctrl.err(str, bAudible)
+function ctrl.error(str, bAudible)
 	MsgC(Color(255, 105, 41), os.date("[%X][CTRL]: "), Color(255, 203, 181), str, "\n")
 	if CLIENT and bAudible then
 		notification.AddLegacy(str, NOTIFY_ERROR, 3)
@@ -39,11 +39,11 @@ function ctrl.err(str, bAudible)
 	end
 end
 
-function ctrl.LoadFolder(path, serveronly)
+function ctrl.loadFolder(path, serverOnly)
 	local files = file.Find(path .. "*.lua", "LUA")
 
 	for k, v in pairs(files) do
-		if not serveronly then AddCSLuaFile(path .. v) end
+		if not serverOnly then AddCSLuaFile(path .. v) end
 
 		local ok, err = pcall(include, path .. v)
 		if not ok then
@@ -51,6 +51,6 @@ function ctrl.LoadFolder(path, serveronly)
 			continue
 		end
 
-		ctrl.filesloaded = ctrl.filesloaded + 1
+		ctrl.filesLoaded = ctrl.filesLoaded + 1
 	end
 end

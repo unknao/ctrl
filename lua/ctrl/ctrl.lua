@@ -1,7 +1,7 @@
-local speed = SysTime()
+util.TimerCycle() --Measure speed
 
 hook.Add("ctrl_initialized", "ctrlinit", function(inittime)
-	ctrl.msg(string.format("Initialized! (Took %G ms)",inittime))
+	ctrl.message(string.format("Initialized! (Took %G ms)",inittime))
 end)
 
 ctrl = ctrl or {}
@@ -22,4 +22,4 @@ if CLIENT then
 	end)
 end
 
-hook.Run("ctrl_initialized", (SysTime() - speed) * 1000)
+hook.Run("ctrl_initialized", util.TimerCycle())

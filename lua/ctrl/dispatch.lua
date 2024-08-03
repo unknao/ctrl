@@ -1,4 +1,4 @@
-local function text2command(txt)
+local function ctrl_text_to_concmd(txt)
 	local cmd = string.match(txt, "%w+")
 	local str = string.gsub(txt, ctrl.seperator, "")
 	local args = string.Explode(", ", str)
@@ -7,12 +7,12 @@ end
 
 if SERVER then
 
-	hook.Add("PlayerSay", "ctrlcmd", function(ply, str)
+	hook.Add("PlayerSay", "ctrlcmd", function(ply, said)
 
-		local txt = string.lower(str)
+		local txt = string.lower(said)
 		if not string.match(txt[1], ctrl.prefix) then return end
-		txt=string.gsub(txt, "^"..ctrl.prefix, "")
-		local cmd, args, str = text2command(txt)
+		txt:gsub("^" .. ctrl.prefix, "")
+		local cmd, args, str = ctrl_text_to_concmd(txt)
 
 		net.Start("ctrlcmd")
 		net.WriteTable({cmd, args, str})
@@ -29,24 +29,22 @@ if CLIENT then
 		ctrl.CallCommand(LocalPlayer(), unpack(net.ReadTable()))
 	end)
 
-	concommand.Add("ctrl", function(ply, cmd, args, argstr)
-		if #argstr==0 then return end
-		ctrl.CallCommand(ply, text2command(argstr))
+	concommand.Add("ctrl", function(ply, cmd, args, argstr) --Console command dispatcher
+		if #argstr == 0 then return end
+		ctrl.CallCommand(ply, ctrl_text_to_concmd(argstr))
 	end,
-	function(cmd, args)
-		local ply=LocalPlayer()
-		local tbl={}
+	function(cmd, args) --Console autocomplete
+		local ply = LocalPlayer()
+		local tbl = {}
 		local subcmd = string.Explode(" ", string.gsub(args, "^ ", ""))[1]
 		if ctrl.cmds[subcmd] then
-			if ply:IsAdmin() or !ctrl.cmds[subcmd].admin then
-				tbl={string.format("%s %s %s", cmd, subcmd, ctrl.cmds[subcmd].help)}
+			if ply:IsAdmin() or not ctrl.cmds[subcmd].admin then
+				tbl = {string.format("%s %s %s", cmd, subcmd, ctrl.cmds[subcmd].help)}
 			end
 			else
 			for k, v in pairs(ctrl.cmds) do
-				if string.find(k, subcmd) then
-					if ply:IsAdmin() or !v.admin then
-						tbl[#tbl+1]=string.format("%s %s", cmd, k)
-					end
+				if k:find(subcmd) and (ply:IsAdmin() or not v.admin) then
+					tbl[#tbl + 1] = string.format("%s %s", cmd, k)
 				end
 			end
 		end

@@ -5,19 +5,19 @@ if SERVER then
 
 	require("finishedloading")
 
-	local CountdownStarted = RealTime()
+	local countdown_start_time = RealTime()
 
-	function ctrl.countdown(duration, name, fancy, func, ...)
+	function ctrl.countdown(delay, name, fancy, func, ...)
 
-		ctrl.msg("Countdown started, duration: " .. duration .. " seconds")
-		local duration = duration
-		local remainder = duration
-		CountdownStarted = RealTime()
+		ctrl.message("Countdown started, duration: " .. delay .. " seconds")
+		local delay = delay
+		local remainder = delay
+		countdown_start_time = RealTime()
 		local vararg = {...}
 
 		net.Start("ctrl.countdown")
 		net.WriteString(name)
-		net.WriteFloat(duration)
+		net.WriteFloat(delay)
 		net.WriteFloat(remainder)
 		net.WriteBool(fancy)
 		net.Broadcast()
@@ -25,21 +25,21 @@ if SERVER then
 		--Do not exclude the people connecting mid countdown
 		hook.Add("FinishedLoading", "ctrl.countdown", function(ply)
 
-			local TimeRemaining = (CountdownStarted + duration) - RealTime()
-			if TimeRemaining <= 0 then return end
+			local time_remaining = (countdown_start_time + delay) - RealTime()
+			if time_remaining <= 0 then return end
 
 			net.Start("ctrl.countdown")
 			net.WriteString(name)
-			net.WriteFloat(TimeRemaining)
+			net.WriteFloat(time_remaining)
 			net.WriteFloat(remainder)
 			net.WriteBool(fancy)
 			net.Send(ply)
 
 		end)
 
-		timer.Create("ctrl.countdown", duration, 1, function()
+		timer.Create("ctrl.countdown", delay, 1, function()
 
-			ctrl.msg("Countdown ended.")
+			ctrl.message("Countdown ended.")
 			func(unpack(vararg))
 			hook.Remove("FinishedLoading", "ctrl.countdown")
 
@@ -49,7 +49,7 @@ if SERVER then
 
 	function ctrl.abort()
 
-		ctrl.msg("Countdown aborted.")
+		ctrl.message("Countdown aborted.")
 		timer.Stop("ctrl.countdown")
 		hook.Remove("FinishedLoading", "ctrl.countdown")
 		net.Start("ctrl.abort")
@@ -64,7 +64,7 @@ end
 
 if CLIENT then
 
-	local fancylines = {
+	local fancy_lines = {
 
 		[180] = "npc/overwatch/cityvoice/fcitadel_3minutestosingularity.wav",
 		[120] = "npc/overwatch/cityvoice/fcitadel_2minutestosingularity.wav",
@@ -96,7 +96,7 @@ if CLIENT then
 	})
 	net.Receive("ctrl.countdown", function()
 
-		local CountdownStarted = RealTime()
+		countdown_start_time = RealTime()
 
 		local name = net.ReadString()
 		local duration = net.ReadFloat()
@@ -105,11 +105,11 @@ if CLIENT then
 
 		hook.Add("HUDPaint", "ctrl.countdown", function()
 
-			local TimeRemaining = ((CountdownStarted + duration) - RealTime())
-			if TimeRemaining < 0 then return end
+			local time_remaining = ((countdown_start_time + duration) - RealTime())
+			if time_remaining < 0 then return end
 
-			draw.RoundedBox(0, 0, 0, ScrW() * (TimeRemaining / remainder) + 2, 7, color_black)
-			draw.RoundedBox(0, 0, 0, ScrW() * (TimeRemaining / remainder), 5, color_white)
+			draw.RoundedBox(0, 0, 0, ScrW() * (time_remaining / remainder) + 2, 7, color_black)
+			draw.RoundedBox(0, 0, 0, ScrW() * (time_remaining / remainder), 5, color_white)
 
 			draw.Text({
 				text = name,
@@ -120,7 +120,7 @@ if CLIENT then
 			})
 
 			draw.Text({
-				text = string.FormattedTime(TimeRemaining, "%02i:%02i.%02i"),
+				text = string.FormattedTime(time_remaining, "%02i:%02i.%02i"),
 				font = "ctrl.countdown",
 				xalign = 1,
 				yalign = 3,
@@ -131,7 +131,7 @@ if CLIENT then
 
 		if fancy then
 
-			local fancysounds = {
+			local fancy_sounds = {
 				"ambient/atmosphere/city_tone.wav",
 				"ambient/atmosphere/underground.wav",
 				"ambient/atmosphere/cave_outdoor1.wav",
@@ -140,70 +140,94 @@ if CLIENT then
 				"ambient/energy/electric_loop.wav",
 				"ambient/atmosphere/cargo_hold1.wav",
 			}
-			ctrl.Sounds = ctrl.Sounds or {}
+			ctrl.sounds = ctrl.sounds or {}
 
-			if table.IsEmpty(ctrl.Sounds) then
-				for i, v in ipairs(fancysounds) do
-					ctrl.Sounds[i] = CreateSound(game.GetWorld(), v)
-					if ctrl.Sounds[i] then ctrl.Sounds[i]:SetSoundLevel(0) end
+			if table.IsEmpty(ctrl.sounds) then
+				for i, v in ipairs(fancy_sounds) do
+					ctrl.sounds[i] = CreateSound(game.GetWorld(), v)
+					if ctrl.sounds[i] then ctrl.sounds[i]:SetSoundLevel(0) end
 				end
 			end
 
-			local SoundStartTime = math.max(remainder - 10, 0)
-			timer.Create("ctrl.countdown.fancysounds", SoundStartTime, 1, function()
-				for i, v in ipairs(ctrl.Sounds) do
+			local sound_start_time = math.max(remainder - 10, 0)
+			timer.Create("ctrl.countdown.fancy_sounds", sound_start_time, 1, function()
+				for i, v in ipairs(ctrl.sounds) do
 					v:PlayEx(0, 100)
 				end
 			end)
 
-			local LastTime, Time = 0, 0
-			local BeamPos1, BeamPos2, vec = Vector(0, 0, 0), Vector(0, 0, 0), Vector(1, 1, 1) --Caching for faster runtime
+			local time_d, time = 0, 0
+			local beam_pos1, beam_pos2, vec = Vector(0, 0, 0), Vector(0, 0, 0), Vector(1, 1, 1) --Caching for faster runtime
 			local m = Matrix()
-			local DrawColor = Color(255, 255, 255, 0)
+			local fancy_draw_color = Color(255, 255, 255, 0)
+			local fancy_final_stage = false
+			local fancy_time_fraction = 1
 
 			--Make it look like the end of the world.
-			hook.Add("PostDrawTranslucentRenderables", "ctrl.countdown", function(bDepth, bSkybox)
+			hook.Add("PostDrawEffects", "ctrl.fancyCountdown", function()
 
-				local TimeRemaining = math.max((CountdownStarted + duration) - RealTime(), 0)
-				local Fraction = math.min(TimeRemaining / math.min(remainder, 10), 1)
+				local time_remaining = math.max((countdown_start_time + duration) - RealTime(), 0)
+				fancy_time_fraction = math.min(time_remaining / math.min(remainder, 10), 1)
 
-				LastTime = Time
-				Time = math.ceil(TimeRemaining)
+				time_d = time
+				time = math.ceil(time_remaining)
 
-				if LastTime ~= Time and fancylines[Time] then
-					surface.PlaySound(fancylines[Time])
+				if time_d ~= time and fancy_lines[time] then
+					surface.PlaySound(fancy_lines[time])
 				end
 
-				if Fraction == 1 then return end
+				if fancy_time_fraction == 1 then return end
 
-				util.ScreenShake(vector_origin, math.ease.InExpo(1 - Fraction) * 6, 50, 0.1, 0)
+				util.ScreenShake(vector_origin, math.ease.InExpo(1 - fancy_time_fraction) * 6, 50, 0.1, 0)
 
-				for i, v in ipairs(ctrl.Sounds) do
-					v:ChangeVolume(math.ease.InExpo(1 - Fraction))
+				for i, v in ipairs(ctrl.sounds) do
+					v:ChangeVolume(math.ease.InExpo(1 - fancy_time_fraction))
 				end
 
 				render.SetColorMaterial()
-				local mult = math.ease.OutExpo(1 - math.max((1 - Fraction) * 1.1 - 1, 0) * 10)
+				local mult = math.ease.OutExpo(1 - math.max((1 - fancy_time_fraction) * 1.1 - 1, 0) * 10)
 
-				DrawColor.r = 255 * mult
-				DrawColor.g = 255 * mult
-				DrawColor.b = 255 * mult
-				DrawColor.a = 255 * math.min((1 - Fraction) * 1.2, 1)
+				fancy_draw_color.r = 255 * mult
+				fancy_draw_color.g = 255 * mult
+				fancy_draw_color.b = 255 * mult
+				fancy_draw_color.a = 255 * math.min((1 - fancy_time_fraction) * 1.2, 1)
 
-				for _ = 1, math.floor(math.ease.InCirc(1 - Fraction) * 5000) do
-					local x, y = math.random(-32767, 32767), math.random(-32767, 32767)
-					BeamPos1:SetUnpacked(x, y, -32767)
-					BeamPos2:SetUnpacked(x, y, 32767)
-					render.DrawBeam(BeamPos1, BeamPos2, 5, 1, 1, DrawColor)
+				local beam_count = math.floor(math.ease.InCirc(1 - fancy_time_fraction) * 10000)
+				cam.Start3D()
+					render.StartBeam(beam_count)
+						local x, y = math.random(-500, 500), math.random(-500, 50)
+						for i = 1, beam_count * 0.25 do
+							if i ~= 1 then
+								render.AddBeam(beam_pos1, 0, 0, fancy_draw_color)
+							end
+							beam_pos1:SetUnpacked(x, y, -32767)
+							beam_pos2:SetUnpacked(x, y, 32767)
+
+							render.AddBeam(beam_pos1, 8, 0, fancy_draw_color)
+							render.AddBeam(beam_pos2, 8, 0, fancy_draw_color)
+							render.AddBeam(beam_pos2, 0, 0, fancy_draw_color)
+							x, y = math.random(-32767, 32767), math.random(-32767, 32767)
+						end
+					render.EndBeam()
+
+					m:Identity()
+					m:SetTranslation(EyePos())
+					m:Scale(vec * (10 + 10000 * fancy_time_fraction))
+					cam.PushModelMatrix(m)
+						render.CullMode(1)
+						render.DrawSphere(vector_origin, 1, 50, 50, fancy_draw_color)
+						render.CullMode(0)
+					cam.PopModelMatrix()
+				cam.End3D()
+				if fancy_time_fraction <= 0.05 and not fancy_final_stage then
+					fancy_final_stage = true
+					hook.Add("PostDrawHUD", "ctrl.fancyCountdownFinalStage", function()
+						render.SetColorMaterial()
+						local fancy_final_countdown_scalar = math.ease.InCirc((0.05 - fancy_time_fraction) * 20)
+						surface.SetDrawColor(fancy_draw_color.r, fancy_draw_color.g, fancy_draw_color.b, fancy_final_countdown_scalar * 255)
+						surface.DrawRect(0, 0, ScrW(), ScrH())
+					end)
 				end
-				m:Identity()
-				m:SetTranslation(EyePos())
-				m:Scale(vec * (10 + 10000 * Fraction))
-				cam.PushModelMatrix(m)
-					render.CullMode(1)
-					render.DrawSphere(vector_origin, 1, 50, 50, DrawColor)
-					render.CullMode(0)
-				cam.PopModelMatrix()
 			end)
 		end
 
@@ -212,9 +236,10 @@ if CLIENT then
 			surface.PlaySound("buttons/button1.wav")
 			hook.Remove("HUDPaint", "ctrl.countdown")
 			timer.Simple(2, function()
-				hook.Remove("PostDrawTranslucentRenderables", "ctrl.countdown")
-				for i, v in ipairs(ctrl.Sounds) do v:Stop() end
-				surface.PlaySound("buttons/lightswitch2.wav")
+				hook.Remove("PostDrawEffects", "ctrl.fancyCountdown")
+				hook.Remove("PostDrawHUD", "ctrl.fancyCountdownFinalStage")
+				fancy_final_stage = false
+				for _, v in ipairs(ctrl.sounds) do v:Stop() end
 			end)
 
 		end)
@@ -224,11 +249,13 @@ if CLIENT then
 	net.Receive("ctrl.abort", function()
 
 		hook.Remove("HUDPaint", "ctrl.countdown")
-		hook.Remove("PostDrawTranslucentRenderables", "ctrl.countdown")
+		hook.Remove("PostDrawEffects", "ctrl.fancyCountdown")
+		hook.Remove("PostDrawHUD", "ctrl.fancyCountdownFinalStage")
+		fancy_final_stage = false
 		timer.Stop("ctrl.countdown")
-		timer.Stop("ctrl.countdown.fancysounds")
+		timer.Stop("ctrl.countdown.fancy_sounds")
 
-		for i, v in ipairs(ctrl.Sounds) do v:Stop() end
+		for i, v in ipairs(ctrl.sounds) do v:Stop() end
 		surface.PlaySound("buttons/button1.wav")
 
 	end)

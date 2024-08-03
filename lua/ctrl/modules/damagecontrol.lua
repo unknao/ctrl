@@ -22,8 +22,6 @@ if SERVER then
 	function ctrl.setDamageMode(ply, str)
 		if not IsValid(ply) then return end
 		local mode = string.lower(str)
-		print(mode)
-		PrintTable(damage_modes)
 
 		if damage_modes[mode] == nil then mode = "mortal" end
 		if damage_modes[mode][1] and not ply:IsAdmin() then mode = "mortal" end

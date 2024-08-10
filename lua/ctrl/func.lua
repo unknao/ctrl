@@ -54,3 +54,26 @@ function ctrl.loadFolder(path, serverOnly)
 		ctrl.filesLoaded = ctrl.filesLoaded + 1
 	end
 end
+
+if CLIENT then return end
+
+function ctrl.getVersion()
+	local addonfolder = "addons/ctrl"
+	local time_str = "Unknown"
+	local name = "Unknown"
+	local hash = "0"
+
+	if file.Exists(addonfolder, "GAME") then
+		addonfolder = addonfolder .. "/.git"
+		local head = file.Read(addonfolder .. "/HEAD", "GAME")
+		if head then
+			name = string.gsub(head, ".+/", ""):sub(1, -2)
+			addonfolder = addonfolder .. "/" .. string.sub(head, 6, -2)
+			if file.Exists(addonfolder, "GAME") then
+				time_str = os.date("%Y.%m.%d", file.Time(addonfolder, "GAME"))
+				hash = file.Read(addonfolder, "GAME"):sub(1, 7)
+			end
+		end
+	end
+	return string.format("Local %s (%s:%s)", time_str, name, hash)
+end

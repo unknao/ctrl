@@ -1,7 +1,7 @@
 util.TimerCycle() --Measure speed
 
 hook.Add("ctrl_initialized", "ctrlinit", function(inittime)
-	ctrl.message(string.format("Initialized! (Took %G ms)",inittime))
+	ctrl.message(string.format("%s Initialized! (Took %G ms)", ctrl.getVersion(), inittime))
 end)
 
 ctrl = ctrl or {}

@@ -55,8 +55,6 @@ function ctrl.loadFolder(path, serverOnly)
 	end
 end
 
-if CLIENT then return end
-
 function ctrl.getVersion()
 	local addonfolder = "addons/ctrl"
 	local time_str = "Unknown"
@@ -67,7 +65,7 @@ function ctrl.getVersion()
 		addonfolder = addonfolder .. "/.git"
 		local head = file.Read(addonfolder .. "/HEAD", "GAME")
 		if head then
-			name = string.gsub(head, ".+/", ""):sub(1, -2)
+			name = string.match(head, ".*/(%S*)")
 			addonfolder = addonfolder .. "/" .. string.sub(head, 6, -2)
 			if file.Exists(addonfolder, "GAME") then
 				time_str = os.date("%Y.%m.%d", file.Time(addonfolder, "GAME"))

@@ -1,4 +1,4 @@
-ctrl.registerDamageMode("buddha", false, true, function(ply, dmg)
+ctrl.registerDamageMode("buddha", false, true, function(ply, _, dmg)
 	if dmg:GetDamageCustom() == 1337 then return end
 
 	--dmg:SetDamageType(DMG_RADIATION)

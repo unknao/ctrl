@@ -17,7 +17,7 @@ if SERVER then
 		net.WriteTable({cmd, args, str})
 		net.Send(ply)
 
-		if not ctrl.cmds[cmd].showchat then return "" end
+		if not ctrl.cmds[cmd].showChat then return "" end
 	end)
 end
 

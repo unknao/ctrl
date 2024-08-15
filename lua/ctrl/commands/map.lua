@@ -14,14 +14,14 @@ ctrl.AddCommand("maps",function(ply)
 		ply:ChatPrint(k:gsub(".bsp", ""))
 	end
 
-end,"<no args>: shows list of server maps.",false,false, SERVER)
+end,"<no args>: shows list of server maps.", false, false, SERVER)
 
 ctrl.AddCommand("restart",function(_, _, args, _)
 
 	local duration = tonumber(args[1]) or 30
 	ctrl.countdown(duration, "Restarting map...", true, RunConsoleCommand, "changelevel", game.GetMap())
 
-end,"<delay (optional)>: restarts current map after <delay> seconds.",true,true, SERVER)
+end,"<delay (optional)>: restarts current map after <delay> seconds.", true, true, SERVER)
 
 ctrl.AddCommand({"map","changelevel"},function(_, _, args, str)
 
@@ -30,6 +30,6 @@ ctrl.AddCommand({"map","changelevel"},function(_, _, args, str)
 	local duration = tonumber(args[2]) or 30
 	ctrl.countdown(duration, string.format("Changing level to %s...", args[1]), true, RunConsoleCommand, "changelevel", args[1])
 
-end,"<map name>, <delay (optional)>: changes current map after <delay> seconds.",true,true, SERVER)
+end,"<map name>, <delay (optional)>: changes current map after <delay> seconds.", true, true, SERVER)
 
 

@@ -2,28 +2,34 @@ ctrl.issues = {}
 ctrl.filesLoaded = 0
 
 function ctrl.EntByString(str)
-	if #str == 0 then
-		return "Invalid String!"
+	if #str == 0 then return NULL end
+	if str[1] == "_" then --if the string stars with _, find by entity id instead
+		local id = tonumber(string.sub(str, 2))
+		if not isnumber(id) then return NULL end
+
+		return Entity(id)
 	end
-	local lower = string.lower(str)
-	local tbl = {}
-	--1st pass
-	for k, v in pairs(player.GetAll()) do
-		if v:Name() == str then return v end
-		if string.find(string.lower(v:Name()), lower, 1, true) then tbl[#tbl + 1] = v end
+
+	local name = string.lower(str)
+	for _, ply in ipairs(player.GetAll()) do --1st pass look for exact match
+		local name_lower = string.lower(ply:Name())
+		if name_lower == name then return ply end
 	end
-	if tbl[1] then
-		return tbl[1]
-		else
-		return string.format([[No such player %q]], str)
+	for _, ply in ipairs(player.GetAll()) do --2nd pass return the first match
+		local name_lower = string.lower(ply:Name())
+		if string.find(name_lower, name, 1, true) then
+			return ply
+		end
 	end
+
+	return NULL --nothing was found
 end
 
-function ctrl.message(str, bShowChat)
+function ctrl.message(str, showChat)
 	if SERVER then
 		MsgC(Color(148, 255, 61), os.date("[%X][CTRL]: "), Color(235, 255, 218), str, "\n")
 	else
-		if bShowChat then
+		if showChat then
 			chat.AddText(Color(148, 255, 61), "[CTRL]: ", Color(235, 255, 218), str)
 		else
 			MsgC(Color(148, 255, 61), os.date("[%X][CTRL]: "), Color(235, 255, 218), str, "\n")
@@ -31,9 +37,9 @@ function ctrl.message(str, bShowChat)
 	end
 end
 
-function ctrl.error(str, bAudible)
+function ctrl.error(str, audible)
 	MsgC(Color(255, 105, 41), os.date("[%X][CTRL]: "), Color(255, 203, 181), str, "\n")
-	if CLIENT and bAudible then
+	if CLIENT and audible then
 		notification.AddLegacy(str, NOTIFY_ERROR, 3)
 		surface.PlaySound("buttons/button8.wav")
 	end

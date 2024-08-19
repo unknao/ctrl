@@ -13,6 +13,7 @@ if SERVER then
 		ply:SendLua([[GAMEMODE:AddNotify(string.format("Unfrozen %s",LocalPlayer():GetEyeTrace().Entity:Name()), NOTIFY_GENERIC, 5); surface.PlaySound("npc/roller/mine/rmine_chirp_answer1.wav")]])
 		ent:Freeze(false)
 		ent:SetMoveType(MOVETYPE_WALK)
+		tHeldPlayers[ent] = nil
 	end)
 
 	hook.Add("PlayerSpawnObject", tag, function(ply)
@@ -24,7 +25,6 @@ hook.Add("PhysgunPickup", tag, function(ply, ent)
 	if not ply:IsAdmin() then return end
 	if not ent:IsPlayer() then return end
 
-	ply.HoldingPlayer = ent
 	tHeldPlayers[ent] = true
 	if SERVER then
 		ent:Freeze(false)
@@ -55,13 +55,13 @@ hook.Add("PhysgunDrop",tag,function(ply,ent)
 		ent:SetMoveType(MOVETYPE_NOCLIP)
 		else
 		ent:SetMoveType(MOVETYPE_WALK)
+		tHeldPlayers[ent] = nil
 	end
 	if SERVER and ply.PlayerHoldingUndoID then
 		undo.Remove(ply, ply.PlayerHoldingUndoID)
 		ply.PlayerHoldingUndoID = nil
 	end
 
-	ply.HoldingPlayer = nil
 	if not ent._Vel then return end
 	ent:SetVelocity(ent._Vel * 10)
 end)

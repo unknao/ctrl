@@ -41,8 +41,8 @@ hook.Add("PhysgunPickup", tag, function(ply, ent)
 		ply.PlayerHoldingUndoID = undo.Finish()
 	end
 
-	ent._LastPos = Vector(0, 0, 0)
-	ent._Pos = Vector(0, 0, 0)
+	ent._LastPos = ent:GetPos()
+	ent._Pos = ent:GetPos()
 	ent._Vel = Vector(0, 0, 0)
 	return true
 end)

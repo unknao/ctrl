@@ -23,8 +23,9 @@ ctrl.AddCommand({"go","goto"},function(ply,_,_,argstr)
 		return
 	end
 	if CLIENT then return end
-	local GotoPos = target:GetPos() - target:GetForward() * -80
+	if not ply:isAlive() then ply:Spawn() end
 
+	local GotoPos = target:GetPos() - target:GetForward() * -80
 	ply:SetPos(GotoPos)
 	ply:SetEyeAngles((target:NearestPoint(ply:GetShootPos()) - ply:GetShootPos()):Angle())
 	ply:EmitSound("NPC_Antlion.Footstep")

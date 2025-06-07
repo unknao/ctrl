@@ -24,7 +24,10 @@ if SERVER then
 		local mode = string.lower(str)
 
 		if damage_modes[mode] == nil then mode = "mortal" end
-		if damage_modes[mode][1] and not ply:IsAdmin() then mode = "mortal" end
+
+		if ply:IsPlayer() and damage_modes[mode][1] and not ply:IsAdmin() then
+			mode = "mortal"
+		end
 
 		if ply.ctrl_damage_mode ~= mode then
 			hook.Run("ctrl_damagemode_changed", ply, ply.ctrl_damage_mode, mode)
@@ -67,7 +70,6 @@ if SERVER then
 
 	hook.Add("EntityTakeDamage", tag, function(ply, dmg)
 		if not IsValid(ply) then return end
-		if not ply:IsPlayer() then return end
 		if not ply.ctrl_damage_mode then return end
 
 		local attacker = dmg:GetAttacker()

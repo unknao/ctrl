@@ -23,7 +23,7 @@ ctrl.AddCommand({"go","goto"},function(ply,_,_,argstr)
 		return
 	end
 	if CLIENT then return end
-	if not ply:isAlive() then ply:Spawn() end
+	if not ply:Alive() then ply:Spawn() end
 
 	local GotoPos = target:GetPos() - target:GetForward() * -80
 	ply:SetPos(GotoPos)
